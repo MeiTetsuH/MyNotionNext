@@ -1,15 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextFetchEvent, NextRequest, NextResponse } from 'next/server'
 import { checkStrIsNotionId, getLastPartOfUrl } from '@/lib/utils'
 import { idToUuid } from 'notion-utils'
 import BLOG from './blog.config'
+import { isMalformedSearchPath, shouldNoIndexPath } from './lib/search-index-policy'
 
 /**
  * Clerk 身份验证中间件
  */
 export const config = {
   // 这里设置白名单，防止静态资源被拦截
-  matcher: ['/((?!.*\\..*|_next|/sign-in|/auth).*)', '/', '/(api|trpc)(.*)']
+  matcher: ['/((?!.*\\..*|_next|/sign-in|/auth).*)', '/', '/(api|trpc)(.*)', '/https(.*)']
 }
 
 // 限制登录访问的路由
@@ -91,4 +92,17 @@ const authMiddleware = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
     })
   : noAuthMiddleware
 
-export default authMiddleware
+export default async function middleware(req: NextRequest, event: NextFetchEvent) {
+  // Historical template URLs are missing pages, not server errors.
+  if (isMalformedSearchPath(req.nextUrl.pathname)) {
+    return new NextResponse('Not found', {
+      status: 404,
+      headers: { 'X-Robots-Tag': 'noindex' }
+    })
+  }
+  const response = await authMiddleware(req, event)
+  if (response && shouldNoIndexPath(req.nextUrl.pathname)) {
+    response.headers.set('X-Robots-Tag', 'noindex, follow')
+  }
+  return response
+}

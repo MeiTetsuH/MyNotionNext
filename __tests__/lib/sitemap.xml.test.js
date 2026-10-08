@@ -35,7 +35,12 @@ describe('generateSitemapXml', () => {
         {
           slug: 'https://example.com/internal/page',
           publishDay: 'invalid-date'
-        }
+        },
+        { slug: 'links' },
+        { slug: 'article/example-9' },
+        { slug: 'search' },
+        { slug: 'private-note', password: 'protected' },
+        { slug: 'https:/vedio.mingzhe.uk' }
       ]
     })
 
@@ -47,6 +52,11 @@ describe('generateSitemapXml', () => {
     expect(xml).not.toContain('<loc>https://external.com/landing</loc>')
     expect(xml).not.toContain('https://example.com/https://external.com/landing')
     expect(xml).not.toContain('Invalid Date')
+    expect(xml).not.toContain('/links</loc>')
+    expect(xml).not.toContain('/article/example-9</loc>')
+    expect(xml).not.toContain('/search</loc>')
+    expect(xml).not.toContain('/private-note</loc>')
+    expect(xml).not.toContain('vedio.mingzhe.uk')
 
     writeSpy.mockRestore()
   })

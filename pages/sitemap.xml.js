@@ -10,6 +10,7 @@ import {
 } from '@/lib/sitemap-utils'
 import { extractLangId, extractLangPrefix } from '@/lib/utils/pageId'
 import { getServerSideSitemap } from 'next-sitemap'
+import { shouldNoIndexPath } from '@/lib/search-index-policy'
 
 export const getServerSideProps = async ctx => {
   let fields = []
@@ -105,11 +106,12 @@ function generateLocalesSitemap(link, allPages, locale) {
       changefreq: 'daily',
       priority: '0.7'
     }
-  ].filter(field => Boolean(field?.loc))
+  ].filter(field => Boolean(field?.loc) && !shouldNoIndexPath(new URL(field.loc).pathname))
 
   const postFields =
     allPages
       ?.filter(p => p.status === BLOG.NOTION_PROPERTY_NAME.status_publish)
+      ?.filter(p => !p.password && !shouldNoIndexPath(p.slug) && !shouldNoIndexPath(p.id))
       // 过滤掉外部链接(http开头)和锚点链接(#开头)
       ?.filter(p => p.slug && !p.slug.startsWith('http') && !p.slug.startsWith('#'))
       ?.map(post => {

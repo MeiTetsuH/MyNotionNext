@@ -5,6 +5,7 @@ import { isHttpLink, loadExternalResource } from '@/lib/utils'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
+import { shouldNoIndexPath } from '@/lib/search-index-policy'
 
 /**
  * 页面的Head头，有用于SEO
@@ -116,6 +117,10 @@ const SEO = props => {
   const TWITTER_CREATOR = siteConfig('TWITTER_CREATOR', '', NOTION_CONFIG)
 
   const AUTHOR = siteConfig('AUTHOR')
+  const noindex = Boolean(post?.password) ||
+    shouldNoIndexPath(router.asPath || router.route) ||
+    shouldNoIndexPath(post?.slug || '') ||
+    shouldNoIndexPath(post?.id || '')
   return (
     <Head>
       <link rel='icon' href={favicon} />
@@ -125,7 +130,7 @@ const SEO = props => {
         name='viewport'
         content='width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0'
       />
-      <meta name='robots' content='follow, index, max-snippet:-1, max-image-preview:large, max-video-preview:-1' />
+      <meta name='robots' content={noindex ? 'noindex, follow' : 'follow, index, max-snippet:-1, max-image-preview:large, max-video-preview:-1'} />
       <meta charSet='UTF-8' />
       <meta name='format-detection' content='telephone=no' />
       <meta name='mobile-web-app-capable' content='yes' />
