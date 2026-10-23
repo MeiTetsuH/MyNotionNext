@@ -153,7 +153,11 @@
     "source-map-js": "^1.2.2",
     "sharp": "^0.35.5",
     "webpack-bundle-analyzer/ws": "^7.5.11",
-    "@clerk/clerk-react": "^5.61.6"
+    "@clerk/clerk-react": "^5.61.6",
+    "**/@typescript-eslint/typescript-estree/minimatch": "^9.0.7",
+    "postcss-selector-parser": "^7.1.6",
+    "**/get-uri/basic-ftp": "^6.2.1",
+    "**/vitepress/vite": "^6.4.4"
   },
   "bugs": {
     "url": "https://github.com/notionnext-org/NotionNext/issues",
