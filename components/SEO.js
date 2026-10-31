@@ -130,6 +130,7 @@ const SEO = props => {
   return (
     <Head>
       <link rel='icon' href={favicon} />
+      <link rel='apple-touch-icon' sizes='180x180' href='/apple-touch-icon.png' />
       <title>{title}</title>
       <meta
         name='theme-color'
