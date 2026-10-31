@@ -8,6 +8,7 @@ import { GlobalStyle } from './GlobalStyle'
 import { initGoogleAdsense } from './GoogleAdsense'
 
 import Head from 'next/head'
+import Script from 'next/script'
 import ExternalScript from './ExternalScript'
 import WebWhiz from './Webwhiz'
 import { useGlobal } from '@/lib/global'
@@ -288,67 +289,60 @@ const ExternalPlugin = props => {
       {AI_CHAT_API || DOCS_CHAT_API ? <DocsChat /> : COZE_BOT_ID && <Coze />}
 
       {ANALYTICS_51LA_ID && ANALYTICS_51LA_CK && (
-        <>
-          <script id='LA_COLLECT' src='//sdk.51.la/js-sdk-pro.min.js' defer />
-          {/* <script async dangerouslySetInnerHTML={{
-              __html: `
-                    LA.init({id:"${ANALYTICS_51LA_ID}",ck:"${ANALYTICS_51LA_CK}",hashMode:true,autoTrack:true})
-                    `
-            }} /> */}
-        </>
+        <Script
+          id='LA_COLLECT'
+          src='//sdk.51.la/js-sdk-pro.min.js'
+          strategy='afterInteractive'
+        />
       )}
 
       {CHATBASE_ID && (
         <>
-          <script
+          <Script
+            id='chatbase-config'
+            strategy='afterInteractive'
+            dangerouslySetInnerHTML={{
+              __html: `window.chatbaseConfig = { chatbotId: "${CHATBASE_ID}" };`
+            }}
+          />
+          <Script
             id={CHATBASE_ID}
             src='https://www.chatbase.co/embed.min.js'
-            defer
-          />
-          <script
-            async
-            dangerouslySetInnerHTML={{
-              __html: `
-                    window.chatbaseConfig = {
-                        chatbotId: "${CHATBASE_ID}",
-                        }
-                    `
-            }}
+            strategy='afterInteractive'
           />
         </>
       )}
 
       {CLARITY_ID && (
-        <>
-          <script
-            async
-            dangerouslySetInnerHTML={{
-              __html: `
-                (function(c, l, a, r, i, t, y) {
-                  c[a] = c[a] || function() {
-                    (c[a].q = c[a].q || []).push(arguments);
-                  };
-                  t = l.createElement(r);
-                  t.async = 1;
-                  t.src = "https://www.clarity.ms/tag/" + i;
-                  y = l.getElementsByTagName(r)[0];
-                  if (y && y.parentNode) {
-                    y.parentNode.insertBefore(t, y);
-                  } else {
-                    l.head.appendChild(t);
-                  }
-                })(window, document, "clarity", "script", "${CLARITY_ID}");
-                `
-            }}
-          />
-        </>
+        <Script
+          id='clarity-js'
+          strategy='afterInteractive'
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(c, l, a, r, i, t, y) {
+                c[a] = c[a] || function() {
+                  (c[a].q = c[a].q || []).push(arguments);
+                };
+                t = l.createElement(r);
+                t.async = 1;
+                t.src = "https://www.clarity.ms/tag/" + i;
+                y = l.getElementsByTagName(r)[0];
+                if (y && y.parentNode) {
+                  y.parentNode.insertBefore(t, y);
+                } else {
+                  l.head.appendChild(t);
+                }
+              })(window, document, "clarity", "script", "${CLARITY_ID}");
+            `
+          }}
+        />
       )}
 
       {COMMENT_DAO_VOICE_ID && (
         <>
-          {/* DaoVoice 反馈 */}
-          <script
-            async
+          <Script
+            id='daovoice-sdk'
+            strategy='afterInteractive'
             dangerouslySetInnerHTML={{
               __html: `
                 (function(i, s, o, g, r, a, m) {
@@ -368,17 +362,16 @@ const ExternalPlugin = props => {
                     s.head.appendChild(a);
                   }
                 })(window, document, "script", ('https:' == document.location.protocol ? 'https:' : 'http:') + "//widget.daovoice.io/widget/daf1a94b.js", "daovoice")
-                `
+              `
             }}
           />
-          <script
-            async
+          <Script
+            id='daovoice-init'
+            strategy='afterInteractive'
             dangerouslySetInnerHTML={{
               __html: `
-             daovoice('init', {
-                app_id: "${COMMENT_DAO_VOICE_ID}"
-              });
-              daovoice('update');
+                daovoice('init', { app_id: "${COMMENT_DAO_VOICE_ID}" });
+                daovoice('update');
               `
             }}
           />
@@ -405,30 +398,39 @@ const ExternalPlugin = props => {
         </>
       )}
 
-      {/* {COMMENT_TWIKOO_ENV_ID && <script defer src={COMMENT_TWIKOO_CDN_URL} />} */}
-
-      {COMMENT_ARTALK_SERVER && <script defer src={COMMENT_ARTALK_JS} />}
+      {COMMENT_ARTALK_SERVER && (
+        <Script
+          id='artalk-js'
+          src={COMMENT_ARTALK_JS}
+          strategy='afterInteractive'
+        />
+      )}
 
       {COMMENT_TIDIO_ID && (
-        <script async src={`//code.tidio.co/${COMMENT_TIDIO_ID}.js`} />
+        <Script
+          id='tidio-js'
+          src={`//code.tidio.co/${COMMENT_TIDIO_ID}.js`}
+          strategy='afterInteractive'
+        />
       )}
 
       {/* gitter聊天室 */}
       {COMMENT_GITTER_ROOM && (
         <>
-          <script
+          <Script
+            id='gitter-sidecar'
             src='https://sidecar.gitter.im/dist/sidecar.v1.js'
-            async
-            defer
+            strategy='afterInteractive'
           />
-          <script
-            async
+          <Script
+            id='gitter-options'
+            strategy='afterInteractive'
             dangerouslySetInnerHTML={{
               __html: `
-            ((window.gitter = {}).chat = {}).options = {
-              room: '${COMMENT_GITTER_ROOM}'
-            };
-            `
+                ((window.gitter = {}).chat = {}).options = {
+                  room: '${COMMENT_GITTER_ROOM}'
+                };
+              `
             }}
           />
         </>
@@ -436,48 +438,57 @@ const ExternalPlugin = props => {
 
       {/* 百度统计 */}
       {ANALYTICS_BAIDU_ID && (
-        <script
-          async
+        <Script
+          id='baidu-analytics'
+          strategy='afterInteractive'
           dangerouslySetInnerHTML={{
             __html: `
-          var _hmt = _hmt || [];
-          (function() {
-            var hm = document.createElement("script");
-            hm.src = "https://hm.baidu.com/hm.js?${ANALYTICS_BAIDU_ID}";
-            var s = document.getElementsByTagName("script")[0]; 
-            s.parentNode.insertBefore(hm, s);
-          })();
-          `
+              var _hmt = _hmt || [];
+              (function() {
+                var hm = document.createElement("script");
+                hm.src = "https://hm.baidu.com/hm.js?${ANALYTICS_BAIDU_ID}";
+                var s = document.getElementsByTagName("script")[0]; 
+                s.parentNode.insertBefore(hm, s);
+              })();
+            `
           }}
         />
       )}
 
       {/* 站长统计 */}
       {ANALYTICS_CNZZ_ID && (
-        <script
-          async
+        <Script
+          id='cnzz-analytics'
+          strategy='afterInteractive'
           dangerouslySetInnerHTML={{
             __html: `
-          document.write(unescape("%3Cspan style='display:none' id='cnzz_stat_icon_${ANALYTICS_CNZZ_ID}'%3E%3C/span%3E%3Cscript src='https://s9.cnzz.com/z_stat.php%3Fid%3D${ANALYTICS_CNZZ_ID}' type='text/javascript'%3E%3C/script%3E"));
-          `
+              document.write(unescape("%3Cspan style='display:none' id='cnzz_stat_icon_${ANALYTICS_CNZZ_ID}'%3E%3C/span%3E%3Cscript src='https://s9.cnzz.com/z_stat.php%3Fid%3D${ANALYTICS_CNZZ_ID}' type='text/javascript'%3E%3C/script%3E"));
+            `
           }}
         />
       )}
 
       {/* UMAMI 统计 */}
       {UMAMI_ID && (
-        <script async defer src={UMAMI_HOST} data-website-id={UMAMI_ID}></script>
+        <Script
+          id='umami-analytics'
+          src={UMAMI_HOST}
+          data-website-id={UMAMI_ID}
+          strategy='afterInteractive'
+        />
       )}
 
       {/* 谷歌统计 */}
       {ANALYTICS_GOOGLE_ID && (
         <>
-          <script
-            async
+          <Script
+            id='gtag-base'
             src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_GOOGLE_ID}`}
+            strategy='afterInteractive'
           />
-          <script
-            async
+          <Script
+            id='gtag-init'
+            strategy='afterInteractive'
             dangerouslySetInnerHTML={{
               __html: `
                 window.dataLayer = window.dataLayer || [];
@@ -494,8 +505,9 @@ const ExternalPlugin = props => {
 
       {/* Matomo 统计 */}
       {MATOMO_HOST_URL && MATOMO_SITE_ID && (
-        <script
-          async
+        <Script
+          id='matomo-analytics'
+          strategy='afterInteractive'
           dangerouslySetInnerHTML={{
             __html: `
               var _paq = window._paq = window._paq || [];

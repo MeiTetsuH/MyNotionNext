@@ -69,14 +69,15 @@ export async function getStaticProps(req) {
     page => page.type === 'Post' && page.status === 'Published'
   )
 
-  // 处理分页
+  // 处理分页（field-notes 为单页多板块布局，需要完整文章/项目/相册列表）
+  const activeTheme = siteConfig('THEME', BLOG.THEME, props?.NOTION_CONFIG)
   const POST_LIST_STYLE = siteConfig(
     'POST_LIST_STYLE',
     'page',
     props?.NOTION_CONFIG
   )
-  if (POST_LIST_STYLE === 'scroll') {
-    // 滚动列表默认给前端返回所有数据
+  if (POST_LIST_STYLE === 'scroll' || activeTheme === 'field-notes') {
+    // 滚动列表或 field-notes 主题默认给前端返回所有已发布数据
   } else if (POST_LIST_STYLE === 'page') {
     props.posts = props.posts?.slice(
       0,
@@ -104,6 +105,50 @@ export async function getStaticProps(req) {
       )
     )
   }
+  // Prefetch Notion blocks for `field-notes` project showcase items (category/tag = 做的东西 / project)
+  if (siteConfig('THEME', BLOG.THEME, props?.NOTION_CONFIG) === 'field-notes') {
+    const workKeywords = new Set(['做的东西', 'project', 'projects', '项目', '开源项目'])
+    const workCandidates = (props.allPages || []).filter(page => {
+      if (page?.type !== 'Post' || page?.status !== 'Published') return false
+      if (page?.password && page.password !== '') return false
+      const cat = String(page?.category || '').trim().toLowerCase()
+      if (workKeywords.has(cat)) return true
+      const rawTags = Array.isArray(page?.tags)
+        ? page.tags
+        : Array.isArray(page?.tagItems)
+        ? page.tagItems
+        : []
+      return rawTags.some(t =>
+        workKeywords.has(
+          typeof t === 'string' ? t.trim().toLowerCase() : String(t?.name || '').trim().toLowerCase()
+        )
+      )
+    })
+
+    if (workCandidates.length > 0) {
+      const workLimit = pLimit(5)
+      props.workProjectPages = await Promise.all(
+        workCandidates.map(page =>
+          workLimit(async () => {
+            const cloned = { ...page }
+            const rawBlockMap = await getPostBlocks(cloned.id, 'field-notes-work')
+            cloned.blockMap = getPublicPostBlockMap(
+              cloned,
+              adapterNotionBlockMap(rawBlockMap),
+              props.allPages
+            )
+            if (cloned.blockMap?.block) {
+              cloned.blockMap.block = formatNotionBlock(cloned.blockMap.block)
+            }
+            return cloned
+          })
+        )
+      )
+    } else {
+      props.workProjectPages = []
+    }
+  }
+
   const isBuildLifecycle = ['build', 'export'].includes(
     process.env.npm_lifecycle_event
   )
