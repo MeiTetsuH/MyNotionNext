@@ -1,9 +1,9 @@
 # Fork maintenance notes
 
-Recorded maintenance baseline: 2026-10-24. This is a snapshot, not a promise that upstream or advisory data is still current.
+Recorded maintenance baseline: 2026-11-02. This is a snapshot, not a promise that upstream or advisory data is still current.
 
 - Upstream: [https://github.com/notionnext-org/NotionNext](https://github.com/notionnext-org/NotionNext)
-- Integrated upstream commit: [`93a14f25570b39da856d40285bafe3d77e838753`](https://github.com/notionnext-org/NotionNext/commit/93a14f25570b39da856d40285bafe3d77e838753)
+- Integrated upstream commit: [`a2aa934b41c51ea95b74cbb67430e38392be01cd`](https://github.com/notionnext-org/NotionNext/commit/a2aa934b41c51ea95b74cbb67430e38392be01cd)
 - Verified maintenance code commit: `19db649683fb40f6c8eb1e3cfcd4acecd0f224a0`
 - Deployment branch: `main`
 
