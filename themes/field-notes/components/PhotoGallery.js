@@ -82,21 +82,21 @@ export const PhotoGallery = ({ posts = [], onOpenPhoto, onOpenNotionPhoto }) => 
             className={filter === 'all' ? 'active' : ''}
             aria-pressed={filter === 'all'}
             onClick={() => setFilter('all')}>
-            {t('filterAll') || `全部 / ${allPhotosCount}`}
+            {`${t('filterAll')} / ${allPhotosCount}`}
           </button>
           <button
             type='button'
             className={filter === 'landscape' ? 'active' : ''}
             aria-pressed={filter === 'landscape'}
             onClick={() => setFilter('landscape')}>
-            {t('filterLandscape') || `自然 / 0${landscapeCount}`}
+            {`${t('filterLandscape')} / ${String(landscapeCount).padStart(2, '0')}`}
           </button>
           <button
             type='button'
             className={filter === 'everyday' ? 'active' : ''}
             aria-pressed={filter === 'everyday'}
             onClick={() => setFilter('everyday')}>
-            {t('filterEveryday') || `光与日常 / ${everydayCount}`}
+            {`${t('filterEveryday')} / ${String(everydayCount).padStart(2, '0')}`}
           </button>
         </div>
       </div>

@@ -18,15 +18,6 @@ export {
 export function parseMultiLang(str, lang = 'zh') {
   if (!str) return ''
   const raw = String(str)
-  // 若包含 '@'，说明是照片的复合 summary: "地点(可三语) @ 参数 @ 描述(可三语)"
-  if (raw.includes('@')) {
-    const segments = raw.split('@').map(s => s.trim())
-    // 优先提取描述（第三段），无描述时回退地点（第一段）
-    if (segments.length >= 3 && segments[2]) {
-      return parseMultiLang(segments[2], lang)
-    }
-    return parseMultiLang(segments[0] || '', lang)
-  }
   const parts = raw.split('||').map(s => s.trim())
   if (parts.length === 1) return parts[0]
   if (lang === 'en') return parts[1] || parts[0]
@@ -40,18 +31,18 @@ export function parseMultiLang(str, lang = 'zh') {
 export function parsePhotoSummary(str, lang = 'zh') {
   if (!str) return { place: '', settings: '', description: '' }
   const raw = String(str).trim()
-  if (!raw.includes('@')) {
-    return {
-      place: '',
-      settings: '',
-      description: parseMultiLang(raw, lang)
-    }
+  const segments = raw.split(/\s+@\s+/).map(s => s.trim())
+  if (segments.length >= 3) {
+    const place = parseMultiLang(segments[0] || '', lang)
+    const settings = segments[1] || ''
+    const description = parseMultiLang(segments.slice(2).join(' @ '), lang)
+    return { place, settings, description }
   }
-  const segments = raw.split('@').map(s => s.trim())
-  const place = parseMultiLang(segments[0] || '', lang)
-  const settings = segments[1] || ''
-  const description = parseMultiLang(segments[2] || '', lang)
-  return { place, settings, description }
+  return {
+    place: '',
+    settings: '',
+    description: parseMultiLang(raw, lang)
+  }
 }
 
 const CATEGORY_I18N = {
@@ -159,7 +150,11 @@ export function formatNotionDate(post) {
   if (!raw && post?.publishDate) {
     const d = new Date(post.publishDate)
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+      // Use deterministic UTC dates so server SSR and client match identically
+      const year = d.getUTCFullYear()
+      const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+      const day = String(d.getUTCDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
     }
   }
   if (!raw) return ''
@@ -244,9 +239,11 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
   if (notionPhotos.length > 0) {
     return notionPhotos.sort((a, b) => {
       if (a.date && b.date && a.date !== b.date) {
-        return a.date < b.date ? -1 : 1
+        return a.date.localeCompare(b.date)
       }
-      return (a.orderHint ?? 999) - (b.orderHint ?? 999)
+      const orderDiff = (a.orderHint ?? 999) - (b.orderHint ?? 999)
+      if (orderDiff !== 0) return orderDiff
+      return String(a.id || '').localeCompare(String(b.id || ''))
     })
   }
 
@@ -289,7 +286,11 @@ export function getLocalizedBlogPosts(allPages = [], lang = 'zh') {
   }
 
   const getBaseSlug = post => {
-    return String(post?.slug || '')
+    const rawSlug = String(post?.slug || '').trim()
+    if (!rawSlug) {
+      return post?.id || post?.short_id || Math.random().toString()
+    }
+    return rawSlug
       .replace(/-(en|ja)$/i, '')
       .replace(/^(en|ja)\//i, '')
   }
@@ -328,7 +329,11 @@ export function getLocalizedBlogPosts(allPages = [], lang = 'zh') {
     })
   }
 
-  return result.sort((a, b) => (b.formattedDate > a.formattedDate ? 1 : -1))
+  return result.sort((a, b) => {
+    const dateCmp = String(b.formattedDate || '').localeCompare(String(a.formattedDate || ''))
+    if (dateCmp !== 0) return dateCmp
+    return String(b.id || '').localeCompare(String(a.id || ''))
+  })
 }
 
 const normalizeNotionId = id => String(id || '').replace(/-/g, '').toLowerCase()
@@ -791,9 +796,7 @@ export function parseNotionWorkProject(page, lang = 'zh', t = k => k) {
       const rawSrc =
         bVal.properties?.source?.[0]?.[0] || bVal.format?.display_source || ''
       const mappedSrc =
-        mapImgUrl(rawSrc, bVal, 'block', false) ||
-        effectiveBlockMap?.signed_urls?.[bVal.id] ||
-        rawSrc
+        mapImgUrl(rawSrc, bVal, 'block', false) || rawSrc
       if (mappedSrc) {
         const rawCaption = getBlockPlainText(bVal, 'caption').trim()
         imagesFromBlocks.push({

@@ -9,6 +9,13 @@ const isLocalFontAwesome = BLOG.FONT_AWESOME?.startsWith(
 // 预先设置深色模式的脚本内容
 const darkModeScript = `
 (function() {
+  const isFieldNotes = '${BLOG.THEME || ''}' === 'field-notes'
+  if (isFieldNotes) {
+    document.documentElement.classList.remove('dark')
+    document.documentElement.classList.add('light')
+    return
+  }
+
   const darkMode = localStorage.getItem('darkMode')
 
   const prefersDark =
@@ -35,6 +42,35 @@ const darkModeScript = `
   // 立即设置 html 元素的类
   document.documentElement.classList.add(shouldBeDark ? 'dark' : 'light')
 })()
+`
+
+// 预先初始化语言脚本，避免客户端二跳闪烁
+const initLangScript = `
+(function() {
+  try {
+    var saved = localStorage.getItem('h-mz-language') || (document.cookie.match(/(?:^|;\\s*)h-mz-language=([^;]+)/) || [])[1];
+    var lang = saved;
+    if (!lang) {
+      var params = new URLSearchParams(window.location.search);
+      var q = (params.get('lang') || params.get('locale') || '').toLowerCase();
+      if (q.indexOf('ja') === 0) lang = 'ja';
+      else if (q.indexOf('en') === 0) lang = 'en';
+      else if (q.indexOf('zh') === 0) lang = 'zh';
+    }
+    if (!lang) {
+      var nav = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
+      for (var i = 0; i < nav.length; i++) {
+        var l = String(nav[i] || '').toLowerCase();
+        if (l.indexOf('zh') === 0) { lang = 'zh'; break; }
+        if (l.indexOf('ja') === 0) { lang = 'ja'; break; }
+        if (l.indexOf('en') === 0) { lang = 'en'; break; }
+      }
+    }
+    if (!lang) lang = 'zh';
+    window.__INIT_LANG__ = lang;
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : (lang === 'ja' ? 'ja' : 'en');
+  } catch(e) {}
+})();
 `
 
 class MyDocument extends Document {
@@ -102,8 +138,9 @@ class MyDocument extends Document {
             </>
           )}
 
-          {/* 预先设置深色模式，避免闪烁 */}
+          {/* 预先设置深色模式与语言，避免闪烁 */}
           <script dangerouslySetInnerHTML={{ __html: darkModeScript }} />
+          <script dangerouslySetInnerHTML={{ __html: initLangScript }} />
         </Head>
 
         <body>

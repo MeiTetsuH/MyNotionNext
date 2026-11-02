@@ -46,12 +46,13 @@ export const Hero = ({ onOpenHeroPhoto }) => {
             type='button'
             className='polaroid hero-photo'
             onClick={() => onOpenHeroPhoto && onOpenHeroPhoto(0)}
-            aria-label='水声，留在这里'>
+            aria-label={t('heroWaterfallTitle')}>
             <span className='tape' aria-hidden='true'></span>
             <img
               src='/themes/field-notes/assets/phone-waterfall-small.jpg'
-              alt='吹割瀑布与绿色山林'
+              alt={t('heroWaterfallAlt')}
               loading='eager'
+              fetchPriority='high'
             />
             <span className='photo-label'>
               <span>{t('heroWaterfallPlace')}</span>
@@ -65,10 +66,10 @@ export const Hero = ({ onOpenHeroPhoto }) => {
             type='button'
             className='polaroid sky-photo phone-portrait'
             onClick={() => onOpenHeroPhoto && onOpenHeroPhoto(1)}
-            aria-label='水边的一抹红'>
+            aria-label={t('heroCraneTitle')}>
             <img
               src='/themes/field-notes/assets/phone-crane-small.jpg'
-              alt='站在蓝色水面中的丹顶鹤'
+              alt={t('heroCraneAlt')}
               loading='lazy'
             />
             <span className='photo-label'>

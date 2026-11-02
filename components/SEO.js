@@ -138,15 +138,15 @@ const SEO = props => {
       />
       <meta
         name='viewport'
-        content='width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0'
+        content='width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, viewport-fit=cover'
       />
       <meta name='robots' content={noindex ? 'noindex, follow' : 'follow, index, max-snippet:-1, max-image-preview:large, max-video-preview:-1'} />
-      <meta charSet='UTF-8' />
       <meta name='format-detection' content='telephone=no' />
       <meta name='mobile-web-app-capable' content='yes' />
       <meta name='apple-mobile-web-app-capable' content='yes' />
       <meta name='apple-mobile-web-app-status-bar-style' content='default' />
       <meta name='apple-mobile-web-app-title' content={title} />
+      <meta name='color-scheme' content='light' />
       {pwaEnabled && (
         <>
           <link rel='manifest' href='/manifest.json' />
@@ -169,8 +169,12 @@ const SEO = props => {
         />
       )}
 
-      {/* 基础SEO元数据 */}
+      {/* 基础SEO元数据与多语言关联 */}
       <link rel='canonical' href={url} />
+      <link rel='alternate' hrefLang='zh-CN' href={url} />
+      <link rel='alternate' hrefLang='ja' href={url} />
+      <link rel='alternate' hrefLang='en' href={url} />
+      <link rel='alternate' hrefLang='x-default' href={url} />
       <meta name='keywords' content={keywords} />
       <meta name='description' content={description} />
       <meta name='author' content={AUTHOR} />
@@ -202,8 +206,6 @@ const SEO = props => {
       <meta name='twitter:description' content={description} />
       <meta name='twitter:image' content={image} />
       <meta name='twitter:image:alt' content={title} />
-
-      <link rel='icon' href={BLOG_FAVICON} />
 
       {COMMENT_WEBMENTION_ENABLE && (
         <>
@@ -251,7 +253,7 @@ const SEO = props => {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
             generateStructuredData(meta, siteInfo, url, image, AUTHOR, LINK)
-          )
+          ).replace(/</g, '\\u003c')
         }}
       />
 
@@ -387,6 +389,7 @@ const getIsoTime = value => {
 const getSEOMeta = (props, router, locale) => {
   const { post, siteInfo, tag, category, page } = props
   const keyword = router?.query?.s
+  const defaultCover = siteInfo?.pageCover || ''
 
   const TITLE = siteConfig('TITLE')
   switch (router.route) {
@@ -394,7 +397,7 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `${siteInfo?.title} | ${siteInfo?.description}`,
         description: `${siteInfo?.description}`,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: '',
         type: 'website'
       }
@@ -402,7 +405,7 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `${locale.NAV.ARCHIVE} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: 'archive',
         type: 'website'
       }
@@ -410,7 +413,7 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `${page} | Page | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: 'page/' + page,
         type: 'website'
       }
@@ -419,7 +422,7 @@ const getSEOMeta = (props, router, locale) => {
         title: `${category} | ${locale.COMMON.CATEGORY} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         slug: 'category/' + category,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         type: 'website'
       }
     case '/category/[category]/page/[page]':
@@ -427,7 +430,7 @@ const getSEOMeta = (props, router, locale) => {
         title: `${category} | ${locale.COMMON.CATEGORY} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         slug: 'category/' + category,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         type: 'website'
       }
     case '/tag/[tag]':
@@ -435,7 +438,7 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `${tag} | ${locale.COMMON.TAGS} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: 'tag/' + tag,
         type: 'website'
       }
@@ -443,7 +446,7 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `${keyword || ''}${keyword ? ' | ' : ''}${locale.NAV.SEARCH} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: 'search',
         type: 'website'
       }
@@ -452,20 +455,20 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `${keyword || ''}${keyword ? ' | ' : ''}${locale.NAV.SEARCH} | ${siteInfo?.title}`,
         description: TITLE,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: 'search/' + (keyword || ''),
         type: 'website'
       }
     case '/404':
       return {
         title: `${siteInfo?.title} | ${locale.NAV.PAGE_NOT_FOUND}`,
-        image: `${siteInfo?.pageCover}`
+        image: defaultCover
       }
     case '/tag':
       return {
         title: `${locale.COMMON.TAGS} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: 'tag',
         type: 'website'
       }
@@ -473,7 +476,7 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `${locale.COMMON.CATEGORY} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
-        image: `${siteInfo?.pageCover}`,
+        image: defaultCover,
         slug: 'category',
         type: 'website'
       }
@@ -488,7 +491,7 @@ const getSEOMeta = (props, router, locale) => {
         description: post?.summary,
         type: post?.type,
         slug: post?.slug,
-        image: post?.pageCoverThumbnail || `${siteInfo?.pageCover}`,
+        image: post?.pageCoverThumbnail || defaultCover,
         category,
         tags: post?.tags,
         publishDay: post?.publishDay,

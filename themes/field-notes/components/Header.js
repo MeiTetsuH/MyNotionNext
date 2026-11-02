@@ -134,7 +134,6 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
                     type='button'
                     className='nav-dock-item nav-dock-trigger'
                     aria-expanded={isOpen}
-                    aria-haspopup='menu'
                     onClick={e => {
                       e.stopPropagation()
                       setOpenKey(prev => (prev === menuKey ? null : menuKey))
@@ -145,7 +144,7 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
                       ▾
                     </span>
                   </button>
-                  <div className='nav-dropdown-menu' role='menu'>
+                  <div className='nav-dropdown-menu'>
                     {subItems.map(sub => {
                       const rawHref = sub.href || sub.slug || '#'
                       const isExt = /^https?:\/\//i.test(String(rawHref))
@@ -160,7 +159,6 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
                             href={rawHref}
                             target='_blank'
                             rel='noopener noreferrer'
-                            role='menuitem'
                             className='nav-dropdown-item'
                             onClick={closeAll}
                           >
@@ -173,7 +171,6 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
                         <Link
                           key={sub.id || sub.title}
                           href={rawHref}
-                          role='menuitem'
                           className='nav-dropdown-item'
                           onClick={closeAll}
                         >
@@ -238,7 +235,7 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
                 ▾
               </span>
             </button>
-            <div className='nav-dropdown-menu nav-dropdown-right' role='menu'>
+            <div className='nav-dropdown-menu nav-dropdown-right'>
               {LANG_OPTIONS.map(opt => {
                 const active = lang === opt.code
                 return (
@@ -246,8 +243,7 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
                     key={opt.code}
                     type='button'
                     lang={opt.code}
-                    role='menuitemradio'
-                    aria-checked={active}
+                    aria-pressed={active}
                     className={`nav-dropdown-item ${active ? 'is-active' : ''}`}
                     onClick={() => {
                       changeLang(opt.code)
@@ -285,7 +281,7 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
           <div
             id='mobile-fieldnotes-drawer'
             className='mobile-dock-panel'
-            role='dialog'
+            role='region'
             aria-label='Navigation & Language'
           >
             <div className='mobile-dock-grid'>
@@ -335,7 +331,43 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
               const subItems = Array.isArray(menu.subMenus)
                 ? menu.subMenus.filter(sub => sub && sub.show !== false)
                 : []
-              if (subItems.length === 0) return null
+
+              if (subItems.length === 0) {
+                const rawHref = menu.href || menu.slug || '#'
+                const isExt = /^https?:\/\//i.test(String(rawHref))
+                if (isExt) {
+                  return (
+                    <div key={menuKey} className='mobile-dock-section'>
+                      <div className='mobile-dock-links'>
+                        <a
+                          href={rawHref}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='mobile-dock-link'
+                          onClick={closeAll}
+                        >
+                          <span>{menuTitle}</span>
+                          <span className='mono'>↗</span>
+                        </a>
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <div key={menuKey} className='mobile-dock-section'>
+                    <div className='mobile-dock-links'>
+                      <Link
+                        href={rawHref}
+                        className='mobile-dock-link'
+                        onClick={closeAll}
+                      >
+                        <span>{menuTitle}</span>
+                        <span className='mono'>→</span>
+                      </Link>
+                    </div>
+                  </div>
+                )
+              }
               return (
                 <div key={menuKey} className='mobile-dock-section'>
                   <div className='mobile-dock-label mono'>{menuTitle}</div>

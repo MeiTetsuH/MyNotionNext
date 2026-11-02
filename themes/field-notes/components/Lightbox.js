@@ -15,6 +15,7 @@ export const Lightbox = ({
   const imgRef = useRef(null)
 
   const { open, mode, index, screen, projectIndex } = viewerState
+  const prevActiveElementRef = useRef(null)
 
   const updateViewerRatio = useCallback(() => {
     const dialog = dialogRef.current
@@ -33,17 +34,30 @@ export const Lightbox = ({
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
-    if (open && !dialog.open) {
-      try {
-        dialog.showModal()
-      } catch (e) {
-        dialog.setAttribute('open', '')
+    if (open) {
+      if (!dialog.open) {
+        prevActiveElementRef.current = document.activeElement
+        try {
+          dialog.showModal()
+        } catch (e) {
+          dialog.setAttribute('open', '')
+        }
       }
       if (imgRef.current && imgRef.current.complete) {
         updateViewerRatio()
       }
     } else if (!open && dialog.open) {
-      dialog.close()
+      try {
+        dialog.close()
+      } catch (e) {
+        dialog.removeAttribute('open')
+      }
+      if (
+        prevActiveElementRef.current &&
+        typeof prevActiveElementRef.current.focus === 'function'
+      ) {
+        prevActiveElementRef.current.focus()
+      }
     }
   }, [open, index, mode, screen, projectIndex, updateViewerRatio])
 
@@ -61,8 +75,6 @@ export const Lightbox = ({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [open, onStep])
-
-  if (!open) return null
 
   let imgSrc = ''
   let alt = ''

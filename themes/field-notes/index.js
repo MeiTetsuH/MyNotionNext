@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -136,15 +134,26 @@ const LayoutBaseInner = props => {
 
     const notionProjectItems = allLocalizedItems
       .filter(p => p.section === 'work')
-      .map(p => (prefetchedMap.has(p.id) ? { ...p, blockMap: prefetchedMap.get(p.id).blockMap } : p))
+      .map(p => {
+        const prefetched = prefetchedMap.get(p.id)
+        if (prefetched?.parsedByLang?.[lang]) {
+          return prefetched.parsedByLang[lang]
+        }
+        if (prefetched?.blockMap) {
+          return parseNotionWorkProject(
+            { ...p, blockMap: prefetched.blockMap },
+            lang,
+            t
+          )
+        }
+        return parseNotionWorkProject(p, lang, t)
+      })
 
     if (notionProjectItems.length > 0) {
-      return notionProjectItems
-        .map(p => parseNotionWorkProject(p, lang, t))
-        .sort((a, b) => {
-          if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder
-          return (b.publishDate || 0) - (a.publishDate || 0)
-        })
+      return notionProjectItems.sort((a, b) => {
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder
+        return (b.publishDate || 0) - (a.publishDate || 0)
+      })
     }
 
     return [
@@ -231,24 +240,31 @@ const LayoutBaseInner = props => {
 
   useEffect(() => {
     if (!combinedPhotos.length) return
+    let ticking = false
     const handleScroll = () => {
-      const docMax = Math.max(
-        1,
-        document.documentElement.scrollHeight - window.innerHeight
-      )
-      const progress = Math.min(1, Math.max(0, window.scrollY / docMax))
-      const targetIdx = Math.min(
-        combinedPhotos.length - 1,
-        Math.floor(progress * combinedPhotos.length)
-      )
-      setScrollActiveIdx(targetIdx)
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const docMax = Math.max(
+            1,
+            document.documentElement.scrollHeight - window.innerHeight
+          )
+          const progress = Math.min(1, Math.max(0, window.scrollY / docMax))
+          const targetIdx = Math.min(
+            combinedPhotos.length - 1,
+            Math.floor(progress * combinedPhotos.length)
+          )
+          setScrollActiveIdx(prev => (prev === targetIdx ? prev : targetIdx))
 
-      // Auto-tuck mobile Polaroid on real vertical scroll (>18px avoids iOS tap bounce jitter)
-      if (
-        window.innerWidth <= 1024 &&
-        Math.abs(window.scrollY - lastExpandScrollYRef.current) > 18
-      ) {
-        setMobileExpanded(false)
+          // Auto-tuck mobile Polaroid on real vertical scroll (>18px avoids iOS tap bounce jitter)
+          if (
+            window.innerWidth <= 1024 &&
+            Math.abs(window.scrollY - lastExpandScrollYRef.current) > 18
+          ) {
+            setMobileExpanded(false)
+          }
+          ticking = false
+        })
+        ticking = true
       }
     }
     handleScroll()
@@ -297,9 +313,19 @@ const LayoutBaseInner = props => {
     })
   }
 
+  const navHighlightTimerRef = useRef(null)
+  useEffect(() => {
+    return () => {
+      if (navHighlightTimerRef.current) {
+        clearTimeout(navHighlightTimerRef.current)
+      }
+    }
+  }, [])
+
   const handleNavPhotosClick = () => {
     setRopeHighlight(true)
-    setTimeout(() => setRopeHighlight(false), 700)
+    if (navHighlightTimerRef.current) clearTimeout(navHighlightTimerRef.current)
+    navHighlightTimerRef.current = setTimeout(() => setRopeHighlight(false), 700)
     openViewer('photo', scrollActiveIdx)
   }
 
@@ -340,23 +366,32 @@ const LayoutBaseInner = props => {
     openViewer('photo', scrollActiveIdx)
   }
 
+  const contextValue = useMemo(
+    () => ({
+      lang,
+      changeLang,
+      t,
+      combinedPhotos,
+      allLocalizedItems,
+      homeLabPosts,
+      notePosts,
+      combinedProjects,
+      openViewer
+    }),
+    [
+      lang,
+      changeLang,
+      t,
+      combinedPhotos,
+      allLocalizedItems,
+      homeLabPosts,
+      notePosts,
+      combinedProjects
+    ]
+  )
+
   return (
-    <FieldNotesContext.Provider
-      value={{
-        lang,
-        changeLang,
-        t,
-        combinedPhotos,
-        allLocalizedItems,
-        homeLabPosts,
-        notePosts,
-        combinedProjects,
-        openViewer,
-        scrollActiveIdx,
-        hoveredIdx,
-        setHoveredIdx
-      }}
-    >
+    <FieldNotesContext.Provider value={contextValue}>
       <div id='theme-field-notes'>
         <Style />
 
@@ -1064,13 +1099,13 @@ const Layout404 = () => {
       }}
     >
       <span className='hello sticker' style={{ marginBottom: '20px' }}>
-        PAGE NOT FOUND
+        {t('pageNotFound')}
       </span>
       <h1 style={{ fontSize: '72px', fontWeight: 900, marginBottom: '20px' }}>
         404
       </h1>
       <p style={{ color: 'var(--muted)', marginBottom: '30px' }}>
-        这一页好像还没折腾出来，或者已经移走了。
+        {t('notFoundDesc')}
       </p>
       <Link href='/' className='button ink'>
         <span>{t('backToHome')}</span>

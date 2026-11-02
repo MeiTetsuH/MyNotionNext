@@ -201,14 +201,16 @@ const ExternalPlugin = props => {
 
   const router = useRouter()
   useEffect(() => {
+    let adsenseTimer = null
+    let convertTimer = null
     // 异步渲染谷歌广告
     if (ADSENSE_GOOGLE_ID) {
-      setTimeout(() => {
+      adsenseTimer = setTimeout(() => {
         initGoogleAdsense(ADSENSE_GOOGLE_ID)
       }, 3000)
     }
 
-    setTimeout(() => {
+    convertTimer = setTimeout(() => {
       // 映射url
       convertInnerUrl({
         allPages: innerLinkPages,
@@ -216,6 +218,11 @@ const ExternalPlugin = props => {
         innerPageUrlParentPath: INNER_PAGE_URL_PARENT_PATH
       })
     }, 500)
+
+    return () => {
+      if (adsenseTimer) clearTimeout(adsenseTimer)
+      if (convertTimer) clearTimeout(convertTimer)
+    }
   }, [
     router,
     ADSENSE_GOOGLE_ID,
@@ -229,11 +236,14 @@ const ExternalPlugin = props => {
       return
     }
 
-    try {
-      // eslint-disable-next-line no-eval
-      eval(GLOBAL_JS)
-    } catch (error) {
-      console.error('Failed to execute GLOBAL_JS:', error)
+    const script = document.createElement('script')
+    script.type = 'text/javascript'
+    script.text = GLOBAL_JS
+    document.body.appendChild(script)
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script)
+      }
     }
   }, [GLOBAL_JS])
 
@@ -302,7 +312,7 @@ const ExternalPlugin = props => {
             id='chatbase-config'
             strategy='afterInteractive'
             dangerouslySetInnerHTML={{
-              __html: `window.chatbaseConfig = { chatbotId: "${CHATBASE_ID}" };`
+              __html: `window.chatbaseConfig = { chatbotId: ${JSON.stringify(CHATBASE_ID)} };`
             }}
           />
           <Script
@@ -325,14 +335,14 @@ const ExternalPlugin = props => {
                 };
                 t = l.createElement(r);
                 t.async = 1;
-                t.src = "https://www.clarity.ms/tag/" + i;
+                t.src = "https://www.clarity.ms/tag/" + encodeURIComponent(${JSON.stringify(CLARITY_ID)});
                 y = l.getElementsByTagName(r)[0];
                 if (y && y.parentNode) {
                   y.parentNode.insertBefore(t, y);
                 } else {
                   l.head.appendChild(t);
                 }
-              })(window, document, "clarity", "script", "${CLARITY_ID}");
+              })(window, document, "clarity", "script", ${JSON.stringify(CLARITY_ID)});
             `
           }}
         />
@@ -370,7 +380,7 @@ const ExternalPlugin = props => {
             strategy='afterInteractive'
             dangerouslySetInnerHTML={{
               __html: `
-                daovoice('init', { app_id: "${COMMENT_DAO_VOICE_ID}" });
+                daovoice('init', { app_id: ${JSON.stringify(COMMENT_DAO_VOICE_ID)} });
                 daovoice('update');
               `
             }}
@@ -428,7 +438,7 @@ const ExternalPlugin = props => {
             dangerouslySetInnerHTML={{
               __html: `
                 ((window.gitter = {}).chat = {}).options = {
-                  room: '${COMMENT_GITTER_ROOM}'
+                  room: ${JSON.stringify(COMMENT_GITTER_ROOM)}
                 };
               `
             }}
@@ -446,7 +456,7 @@ const ExternalPlugin = props => {
               var _hmt = _hmt || [];
               (function() {
                 var hm = document.createElement("script");
-                hm.src = "https://hm.baidu.com/hm.js?${ANALYTICS_BAIDU_ID}";
+                hm.src = "https://hm.baidu.com/hm.js?" + encodeURIComponent(${JSON.stringify(ANALYTICS_BAIDU_ID)});
                 var s = document.getElementsByTagName("script")[0]; 
                 s.parentNode.insertBefore(hm, s);
               })();
@@ -462,14 +472,20 @@ const ExternalPlugin = props => {
           strategy='afterInteractive'
           dangerouslySetInnerHTML={{
             __html: `
-              document.write(unescape("%3Cspan style='display:none' id='cnzz_stat_icon_${ANALYTICS_CNZZ_ID}'%3E%3C/span%3E%3Cscript src='https://s9.cnzz.com/z_stat.php%3Fid%3D${ANALYTICS_CNZZ_ID}' type='text/javascript'%3E%3C/script%3E"));
+              (function() {
+                var s = document.createElement('script');
+                s.src = 'https://s9.cnzz.com/z_stat.php?id=' + encodeURIComponent(${JSON.stringify(ANALYTICS_CNZZ_ID)});
+                s.type = 'text/javascript';
+                s.async = true;
+                document.head.appendChild(s);
+              })();
             `
           }}
         />
       )}
 
       {/* UMAMI 统计 */}
-      {UMAMI_ID && (
+      {UMAMI_ID && UMAMI_HOST && (
         <Script
           id='umami-analytics'
           src={UMAMI_HOST}
@@ -483,7 +499,7 @@ const ExternalPlugin = props => {
         <>
           <Script
             id='gtag-base'
-            src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_GOOGLE_ID}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ANALYTICS_GOOGLE_ID)}`}
             strategy='afterInteractive'
           />
           <Script
@@ -494,7 +510,7 @@ const ExternalPlugin = props => {
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
-                gtag('config', '${ANALYTICS_GOOGLE_ID}', {
+                gtag('config', ${JSON.stringify(ANALYTICS_GOOGLE_ID)}, {
                   page_path: window.location.pathname,
                 });
               `
@@ -514,9 +530,9 @@ const ExternalPlugin = props => {
               _paq.push(['trackPageView']);
               _paq.push(['enableLinkTracking']);
               (function() {
-                var u="//${MATOMO_HOST_URL}/";
+                var u="//" + ${JSON.stringify(MATOMO_HOST_URL)} + "/";
                 _paq.push(['setTrackerUrl', u+'matomo.php']);
-                _paq.push(['setSiteId', '${MATOMO_SITE_ID}']);
+                _paq.push(['setSiteId', ${JSON.stringify(MATOMO_SITE_ID)}]);
                 var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
                 g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
               })();

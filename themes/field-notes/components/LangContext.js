@@ -4,10 +4,20 @@ import { translations, edgeCopy, transitCopy } from './translations'
 const LangContext = createContext()
 
 export const LangProvider = ({ children }) => {
-  const [lang, setLang] = useState('zh')
+  const [lang, setLang] = useState(() => {
+    if (typeof window !== 'undefined' && window.__INIT_LANG__) {
+      return window.__INIT_LANG__
+    }
+    return 'zh'
+  })
 
   useEffect(() => {
     try {
+      if (typeof window !== 'undefined' && window.__INIT_LANG__ && translations[window.__INIT_LANG__]) {
+        setLang(window.__INIT_LANG__)
+        return
+      }
+
       // 1. 用户主动选过语言偏好（localStorage 或 cookie）
       const saved =
         localStorage.getItem('h-mz-language') ||

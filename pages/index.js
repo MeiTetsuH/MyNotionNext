@@ -126,24 +126,70 @@ export async function getStaticProps(req) {
     })
 
     if (workCandidates.length > 0) {
-      const workLimit = pLimit(5)
-      props.workProjectPages = await Promise.all(
+      // Concurrency reduced to 2 with retry backoff to avoid Notion 429 rate limit
+      const workLimit = pLimit(2)
+      const fetchBlocksWithRetry = async (pageId, retries = 2) => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            return await getPostBlocks(pageId, 'field-notes-work')
+          } catch (err) {
+            if (attempt === retries) throw err
+            await new Promise(res => setTimeout(res, 500 * (attempt + 1)))
+          }
+        }
+      }
+
+      const results = await Promise.allSettled(
         workCandidates.map(page =>
           workLimit(async () => {
             const cloned = { ...page }
-            const rawBlockMap = await getPostBlocks(cloned.id, 'field-notes-work')
-            cloned.blockMap = getPublicPostBlockMap(
-              cloned,
-              adapterNotionBlockMap(rawBlockMap),
-              props.allPages
-            )
-            if (cloned.blockMap?.block) {
-              cloned.blockMap.block = formatNotionBlock(cloned.blockMap.block)
+            let rawBlockMap = null
+            try {
+              rawBlockMap = await fetchBlocksWithRetry(cloned.id)
+            } catch (err) {
+              console.warn(
+                `[field-notes-work] Failed to fetch blocks for ${cloned.id}:`,
+                err?.message || err
+              )
             }
+
+            if (rawBlockMap) {
+              const adapted = adapterNotionBlockMap(rawBlockMap)
+              const blockMap = getPublicPostBlockMap(
+                cloned,
+                adapted,
+                props.allPages
+              )
+              if (blockMap?.block) {
+                blockMap.block = formatNotionBlock(blockMap.block)
+              }
+              cloned.blockMap = blockMap
+            }
+
+            // Pre-parse 3 language projections at SSR to avoid bloating __NEXT_DATA__
+            try {
+              const { parseNotionWorkProject } = await import(
+                '@/themes/field-notes/data'
+              )
+              cloned.parsedByLang = {
+                zh: parseNotionWorkProject(cloned, 'zh'),
+                en: parseNotionWorkProject(cloned, 'en'),
+                ja: parseNotionWorkProject(cloned, 'ja')
+              }
+            } catch (e) {
+              // Fallback silently if theme helper cannot be loaded
+            }
+
+            // Strip bulky blockMap from page data to keep JSON payload lean
+            delete cloned.blockMap
             return cloned
           })
         )
       )
+
+      props.workProjectPages = results
+        .filter(r => r.status === 'fulfilled' && r.value)
+        .map(r => r.value)
     } else {
       props.workProjectPages = []
     }
