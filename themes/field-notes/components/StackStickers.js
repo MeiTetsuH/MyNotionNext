@@ -1,199 +1,233 @@
-import React from 'react'
+import React, { useId } from 'react'
 import { useLang } from './LangContext'
+import { MARKS } from './stickerMarks'
+
+/*
+ * Die-cut vinyl sticker system (48x48 viewBox):
+ *   1. cream backing with the ink outline inherited from CSS (the "die-cut" edge)
+ *   2. a pastel tint plate inset by ~3.6 units
+ *   3. the brand mark in a single spot colour (or the brand's own palette)
+ *   4. a soft gloss stroke on top for the vinyl sheen
+ */
+const INK = '#20211e'
+const CREAM = '#fffef8'
+const NO_STROKE = { stroke: 'none' }
+
+// Place a 24x24 brand path centred at (cx, cy) with the given rendered size
+const Mark = ({ d, size = 24, cx = 24, cy = 24, fill = INK }) => (
+  <path
+    d={d}
+    fill={fill}
+    style={NO_STROKE}
+    transform={`translate(${cx - size / 2} ${cy - size / 2}) scale(${size / 24})`}
+  />
+)
+
+const Gloss = ({ d = 'M10.9 19.4A13.8 13.8 0 0 1 18.3 11.2', opacity = 0.55 }) => (
+  <path
+    d={d}
+    fill='none'
+    stroke='#fff'
+    strokeWidth='2.2'
+    strokeLinecap='round'
+    opacity={opacity}
+  />
+)
+
+const Disc = ({ tint, children, gloss = true }) => (
+  <svg viewBox='0 0 48 48' aria-hidden='true'>
+    <circle cx='24' cy='24' r='21' fill={CREAM} />
+    <circle cx='24' cy='24' r='17.4' fill={tint} style={NO_STROKE} />
+    {children}
+    {gloss && <Gloss />}
+  </svg>
+)
+
+const Tile = ({ tint, children, gloss = true }) => (
+  <svg viewBox='0 0 48 48' aria-hidden='true'>
+    <rect x='4' y='4' width='40' height='40' rx='11' fill={CREAM} />
+    <rect x='7.6' y='7.6' width='32.8' height='32.8' rx='8' fill={tint} style={NO_STROKE} />
+    {children}
+    {gloss && <Gloss d='M11.6 18.4V15.6a4 4 0 0 1 4-4h2.8' />}
+  </svg>
+)
+
+const HEX_OUTER = '24,3 42.2,13.5 42.2,34.5 24,45 5.8,34.5 5.8,13.5'
+const HEX_INNER = '24,7.2 38.6,15.6 38.6,32.4 24,40.8 9.4,32.4 9.4,15.6'
 
 const ICONS = {
   docker: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <rect x='8' y='17' width='7' height='7' fill='#d2fc4b' />
-      <rect x='15' y='17' width='7' height='7' fill='#fffef8' />
-      <rect x='22' y='17' width='7' height='7' fill='#dfd2fb' />
-      <rect x='15' y='10' width='7' height='7' fill='#ffd08a' />
-      <rect x='22' y='10' width='7' height='7' fill='#fffef8' />
-      <rect x='22' y='3' width='7' height='7' fill='#d2fc4b' />
-      <path
-        d='M4 25h30c1-3 0-5 1-7 3 1 4 3 4 5 2-1 4-1 5 0-1 2-2 3-4 3-2 8-9 14-19 14C13 40 4 35 4 25Z'
-        fill='#8bd0ff'
-      />
-      <circle cx='14' cy='31' r='1.8' fill='#20211e' stroke='none' />
-    </svg>
+    <Disc tint='#cfe6ff'>
+      <Mark d={MARKS.docker} size={27} cy={24.4} fill='#2465d8' />
+    </Disc>
   ),
   k8s: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <polygon
-        points='24,4 39.6,11.5 43.5,28.4 32.7,42 15.3,42 4.5,28.4 8.4,11.5'
-        fill='#b4cdff'
-      />
-      <circle cx='24' cy='25' r='10' fill='#fffef8' />
-      <path
-        d='M24 25 24 15M24 25 31.8 18.8M24 25 33.7 27.2M24 25 28.3 34M24 25 19.7 34M24 25 14.3 27.2M24 25 16.2 18.8'
-        fill='none'
-        strokeWidth='2.2'
-      />
-      <circle cx='24' cy='25' r='3.6' fill='#dfd2fb' />
-    </svg>
+    <Disc tint='#dde6ff'>
+      <Mark d={MARKS.k8s} size={27} fill='#3567d6' />
+    </Disc>
   ),
   cloudflare: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <path
-        d='M12 37h24c5 0 8-3 8-7 0-4-3-7-7.5-7-1-5-5-8-10-8-5 0-9 3-10 8-4 .5-7 3-7 7 0 4 1 7 2.5 7Z'
-        fill='#ffd08a'
-      />
-      <path d='M27 18l-6 10h5l-2 7 8-11h-5z' fill='#fffef8' strokeWidth='2.2' />
-    </svg>
+    <Disc tint='#fff0da'>
+      <Mark d={MARKS.cloudflareBig} size={29} cy={23.6} fill='#f38020' />
+      <Mark d={MARKS.cloudflareSmall} size={29} cy={23.6} fill='#fbad41' />
+    </Disc>
   ),
   tailscale: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <circle cx='24' cy='24' r='21' fill='#dfd2fb' />
-      <g fill='#20211e' stroke='none'>
-        <circle cx='16' cy='16' r='3' opacity='.3' />
-        <circle cx='24' cy='16' r='3' opacity='.3' />
-        <circle cx='32' cy='16' r='3' opacity='.3' />
-        <circle cx='16' cy='24' r='3' opacity='.3' />
-        <circle cx='24' cy='24' r='3' />
-        <circle cx='32' cy='24' r='3' opacity='.3' />
-        <circle cx='16' cy='32' r='3' />
-        <circle cx='24' cy='32' r='3' />
-        <circle cx='32' cy='32' r='3' />
-      </g>
-    </svg>
+    <Disc tint='#e8defc'>
+      <Mark d={MARKS.tailscale} size={22} />
+    </Disc>
   ),
   adguard: (
     <svg viewBox='0 0 48 48' aria-hidden='true'>
       <path
-        d='M24 4 8 10v12c0 11 7 18 16 22 9-4 16-11 16-22V10Z'
-        fill='#8fe388'
+        d={MARKS.adguardShield}
+        fill={CREAM}
+        strokeWidth='1.6'
+        transform='translate(3 2.6) scale(1.75)'
       />
-      <path d='M16 24l6 6 11-12' fill='none' strokeWidth='3.8' />
+      <path
+        d={MARKS.adguardShield}
+        fill='#68bc71'
+        style={NO_STROKE}
+        transform='translate(7.8 7.4) scale(1.35)'
+      />
+      <path
+        d={MARKS.adguardCheck}
+        fill={CREAM}
+        style={NO_STROKE}
+        transform='translate(7.8 7.4) scale(1.35)'
+      />
+      <Gloss d='M11.6 17.2v-5.4c2.4-1.1 5-1.8 7.6-2.1' />
     </svg>
   ),
   syncthing: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <circle cx='24' cy='24' r='21' fill='#b4cdff' />
-      <path d='M14 21a12 12 0 0 1 21-4M35 8v9h-9' fill='none' />
-      <path d='M34 27a12 12 0 0 1-21 4M13 40v-9h9' fill='none' />
-      <circle cx='24' cy='24' r='3.4' fill='#d2fc4b' />
-    </svg>
+    <Disc tint='#d3ecff'>
+      <Mark d={MARKS.syncthing} size={29} fill='#1b8fd2' />
+    </Disc>
   ),
   cli: (
     <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <rect x='5' y='8' width='38' height='32' rx='5' fill='#20211e' />
-      <g fill='#fffef8' stroke='none'>
-        <circle cx='11.5' cy='14' r='1.7' />
-        <circle cx='17' cy='14' r='1.7' />
-        <circle cx='22.5' cy='14' r='1.7' />
+      <rect x='3.5' y='7' width='41' height='34' rx='7' fill={CREAM} />
+      <rect x='7' y='10.5' width='34' height='27' rx='4.5' fill={INK} style={NO_STROKE} />
+      <g style={NO_STROKE}>
+        <circle cx='12' cy='15' r='1.6' fill='#ff8f7a' />
+        <circle cx='16.6' cy='15' r='1.6' fill='#ffd08a' />
+        <circle cx='21.2' cy='15' r='1.6' fill='#8fe388' />
       </g>
-      <path d='M13 23l6 5-6 5M23 34h10' fill='none' stroke='#d2fc4b' strokeWidth='3.2' />
+      <path d='M7 18.6h34' stroke='#3a3b36' strokeWidth='1' />
+      <path
+        d='M12.6 23.2l4.4 3.4-4.4 3.4'
+        fill='none'
+        stroke='#d2fc4b'
+        strokeWidth='2.4'
+      />
+      <rect x='20.4' y='28.6' width='8.6' height='2.6' rx='.6' fill={CREAM} style={NO_STROKE} />
+      <Gloss d='M10.4 13.6a3 3 0 0 1 2.4-1.2' opacity={0.35} />
     </svg>
   ),
   relay: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <rect x='7' y='6' width='28' height='34' rx='2.5' fill='#fffef8' />
-      <rect x='11' y='10' width='20' height='18' fill='#8bd0ff' strokeWidth='2' />
-      <circle cx='16.5' cy='15' r='3' fill='#ffd08a' strokeWidth='2' />
-      <path d='M11 28l7-9 5 5 3-3 5 7Z' fill='#d2fc4b' strokeWidth='2' />
-      <circle cx='37' cy='36' r='9' fill='#dfd2fb' />
-      <path d='M32 36h10M38 32l4 4-4 4' fill='none' strokeWidth='2.6' />
-    </svg>
+    <Tile tint='#fff1b8' gloss={false}>
+      <g transform='rotate(-7 21 21)'>
+        <rect x='10' y='11' width='22' height='19.5' rx='1.4' fill={CREAM} strokeWidth='1.8' />
+        <rect x='12.4' y='13.4' width='17.2' height='11.6' fill='#9fd3ff' strokeWidth='1.3' />
+        <path d='M12.4 25l5-5.6 3.4 3.6 2.4-2.4 6.4 4.4Z' fill='#8fe388' strokeWidth='1.3' />
+        <circle cx='17' cy='17.4' r='1.8' fill='#ffd08a' strokeWidth='1.2' />
+      </g>
+      <circle cx='33' cy='32.4' r='7.6' fill='#d2fc4b' strokeWidth='2' />
+      <circle cx='33' cy='32.4' r='1.9' fill={INK} style={NO_STROKE} />
+      <circle
+        cx='33'
+        cy='32.4'
+        r='4.6'
+        fill='none'
+        strokeWidth='1.3'
+        strokeDasharray='.9 1.5'
+      />
+    </Tile>
   ),
   github: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <circle cx='24' cy='24' r='21' fill='#fffef8' />
-      <path
-        d='M24 6a18 18 0 0 0-5.7 35.1c.9.2 1.2-.4 1.2-.9v-3.2c-5 1.1-6-2.4-6-2.4-.8-2.1-2-2.7-2-2.7-1.6-1.1.1-1.1.1-1.1 1.8.1 2.8 1.9 2.8 1.9 1.6 2.8 4.2 2 5.2 1.5.2-1.2.7-2 1.2-2.5-4-.5-8.2-2-8.2-9a7 7 0 0 1 1.9-4.8c-.2-.5-.8-2.3.2-4.8 0 0 1.5-.5 5 1.9a17.3 17.3 0 0 1 9.2 0c3.5-2.4 5-1.9 5-1.9 1 2.5.4 4.3.2 4.8a7 7 0 0 1 1.9 4.8c0 7-4.2 8.5-8.2 9 .7.6 1.3 1.8 1.3 3.6V39c0 .5.3 1.1 1.2.9A18 18 0 0 0 24 6Z'
-        fill='#20211e'
-      />
-    </svg>
+    <Disc tint='#d2fc4b'>
+      <Mark d={MARKS.github} size={29.5} fill={INK} />
+    </Disc>
   ),
   ubuntu: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <circle cx='24' cy='24' r='21' fill='#ffe3d1' />
-      <circle cx='24' cy='24' r='14' fill='none' stroke='#e95420' strokeWidth='4.5' />
-      <circle cx='24' cy='8' r='3.2' fill='#e95420' />
-      <circle cx='10' cy='32' r='3.2' fill='#e95420' />
-      <circle cx='38' cy='32' r='3.2' fill='#e95420' />
-      <circle cx='24' cy='8' r='1.4' fill='#fffef8' />
-      <circle cx='10' cy='32' r='1.4' fill='#fffef8' />
-      <circle cx='38' cy='32' r='1.4' fill='#fffef8' />
-    </svg>
+    <Disc tint='#ffe2d3'>
+      <Mark d={MARKS.ubuntu} size={27} fill='#e2581f' />
+    </Disc>
   ),
   telegram: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <circle cx='24' cy='24' r='21' fill='#8bd0ff' />
-      <path
-        d='M36 12L10 22.5l8.5 3.5 13-9.5-10 11.5v6.5l4.5-4.5 7.5 5.5L36 12Z'
-        fill='#fffef8'
-      />
-      <path d='M21.5 28v7l3.8-4-3.8-3Z' fill='#bce3ff' />
-    </svg>
+    <Disc tint='#cdeaff'>
+      <Mark d={MARKS.telegram} size={29.5} fill='#2a9fdc' />
+    </Disc>
   ),
   googlephotos: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <rect x='4' y='4' width='40' height='40' rx='10' fill='#fffef8' />
-      <path d='M15 14a8 8 0 0 1 8 8v2h-8a8 8 0 0 1 0-16Z' fill='#ffd08a' />
-      <path d='M33 15a8 8 0 0 1-8 8h-2v-8a8 8 0 0 1 16 0Z' fill='#ff8f9c' />
-      <path d='M33 34a8 8 0 0 1-8-8v-2h8a8 8 0 0 1 0 16Z' fill='#7cc6fe' />
-      <path d='M15 33a8 8 0 0 1 8-8h2v8a8 8 0 0 1-16 0Z' fill='#8fe388' />
-    </svg>
+    <Tile tint='#f7f3e8'>
+      <Mark d={MARKS.photosRed} size={25} fill='#ea4f3d' />
+      <Mark d={MARKS.photosBlue} size={25} fill='#4a86e8' />
+      <Mark d={MARKS.photosGreen} size={25} fill='#34a853' />
+      <Mark d={MARKS.photosYellow} size={25} fill='#f9bb2d' />
+    </Tile>
   ),
   apple: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <rect x='4' y='4' width='40' height='40' rx='10' fill='#dfd2fb' />
+    <Tile tint='#e8defc'>
+      <Mark d={MARKS.apple} size={21} cx={22} cy={22.6} />
+      {/* Time Machine badge */}
+      <circle cx='34.6' cy='34.6' r='7.4' fill='#d2fc4b' strokeWidth='2' />
       <path
-        d='M29.5 24.2c0-3.6 2.9-5.3 3-5.4-1.7-2.4-4.3-2.8-5.2-2.8-2.2-.2-4.4 1.3-5.5 1.3-1.1 0-2.8-1.3-4.6-1.3-2.4 0-4.6 1.4-5.8 3.5-2.5 4.4-.6 10.8 1.8 14.3 1.2 1.7 2.6 3.6 4.4 3.5 1.8-.1 2.5-1.2 4.6-1.2 2.1 0 2.8 1.2 4.6 1.1 1.9 0 3.1-1.7 4.3-3.4 1.4-2 1.9-3.9 2-4-0.1-.1-3.6-1.4-3.6-5.6Z'
-        fill='#20211e'
+        d='M30.5 33.4a4.3 4.3 0 1 1 .9 3.6M30.3 30.9l.2 2.6 2.5-.6M34.6 32.2v2.6l1.8 1.1'
+        fill='none'
+        strokeWidth='1.3'
       />
-      <path
-        d='M26.2 13.5c1-.1.2 2.3-.5 3.3-1 1.2-2.7 2.1-3.8 2-.3-1.2.3-2.4 1-3.3 1-1.1 2.4-1.9 3.3-2Z'
-        fill='#d2fc4b'
-      />
-    </svg>
+    </Tile>
   ),
   python: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <circle cx='24' cy='24' r='21' fill='#fffef8' />
-      <path
-        d='M23.5 8c-6 0-5.7 2.6-5.7 2.6v2.7h5.9v.9h-8.3c-3.7 0-6.4 2.2-6.4 6.4 0 4.1 2.3 6.3 5.3 6.3h1.8v-2.5c0-3 2.6-5.6 5.6-5.6h5.7c2.5 0 4.5-2.1 4.5-4.6V12.7C31.9 9.8 28.5 8 23.5 8Zm-3.1 2.8a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z'
-        fill='#4b8bbe'
-      />
-      <path
-        d='M24.5 40c6 0 5.7-2.6 5.7-2.6v-2.7h-5.9v-.9h8.3c3.7 0 6.4-2.2 6.4-6.4 0-4.1-2.3-6.3-5.3-6.3h-1.8v2.5c0 3-2.6 5.6-5.6 5.6h-5.7c-2.5 0-4.5 2.1-4.5 4.6v1.9c0 2.9 3.4 4.7 8.4 4.7Zm3.1-2.8a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z'
-        fill='#ffd43b'
-      />
-    </svg>
+    <Disc tint='#eaf1fa'>
+      <Mark d={MARKS.pythonBlue} size={25} fill='#3b77a8' />
+      <Mark d={MARKS.pythonYellow} size={25} fill='#f5c431' />
+    </Disc>
   ),
   nas: (
     <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <rect x='6' y='10' width='36' height='28' rx='4' fill='#fffef8' />
-      <rect x='10' y='14' width='10' height='20' rx='2' fill='#f5f2e9' />
-      <rect x='23' y='14' width='10' height='20' rx='2' fill='#f5f2e9' />
-      <circle cx='15' cy='30' r='1.5' fill='#28c76f' />
-      <circle cx='28' cy='30' r='1.5' fill='#28c76f' />
-      <circle cx='37' cy='18' r='1.5' fill='#28c76f' />
-      <circle cx='37' cy='24' r='1.5' fill='#28c76f' />
-      <circle cx='37' cy='30' r='1.5' fill='#8bd0ff' />
-      {/* Mini lobster stamp */}
-      <circle cx='28' cy='20' r='2' fill='#d9402f' stroke='none' />
+      <rect x='7' y='4' width='34' height='40' rx='6.5' fill={CREAM} />
+      <rect x='10.4' y='7.4' width='27.2' height='33.2' rx='3.6' fill='#2b2c28' style={NO_STROKE} />
+      {/* Status / LAN / Disk LEDs */}
+      <g style={NO_STROKE}>
+        <circle cx='13.6' cy='11.8' r='1' fill='#8fe388' />
+        <circle cx='13.6' cy='15.2' r='1' fill='#8fe388' />
+        <circle cx='13.6' cy='18.6' r='1' fill='#8fe388' />
+        <circle cx='13.6' cy='22' r='1' fill='#ffd08a' />
+        <rect x='12.7' y='27' width='1.8' height='3.6' rx='.4' fill='#5b5c55' />
+      </g>
+      <circle cx='13.6' cy='35.4' r='1.7' fill='none' stroke='#8bd0ff' strokeWidth='1' />
+      {/* Two hot-swap drive trays */}
+      <g style={NO_STROKE}>
+        <rect x='17.2' y='9.6' width='9' height='28.8' rx='1.4' fill='#3d3e39' />
+        <rect x='27.6' y='9.6' width='9' height='28.8' rx='1.4' fill='#3d3e39' />
+        <rect x='17.2' y='35' width='9' height='3.4' rx='1' fill='#1a1b18' />
+        <rect x='27.6' y='35' width='9' height='3.4' rx='1' fill='#1a1b18' />
+      </g>
+      <path
+        d='M19 13h5.4M19 15.6h5.4M19 18.2h5.4M19 20.8h5.4M19 23.4h5.4M19 26h5.4M19 28.6h5.4M19 31.2h5.4M29.4 13h5.4M29.4 15.6h5.4M29.4 18.2h5.4M29.4 20.8h5.4M29.4 23.4h5.4M29.4 26h5.4M29.4 28.6h5.4M29.4 31.2h5.4'
+        stroke='#55564f'
+        strokeWidth='1'
+      />
+      {/* Mini lobster sticker */}
+      <circle cx='36.4' cy='8.2' r='3.2' fill='#e8553f' stroke={CREAM} strokeWidth='1.3' />
     </svg>
   ),
   workers: (
     <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <polygon points='24,6 40,15.2 40,32.8 24,42 8,32.8 8,15.2' fill='#ffd08a' />
-      <polygon points='24,10 36,17 36,31 24,38 12,31 12,17' fill='#fffef8' />
-      <path d='M26 14L19 25h7l-3 9 10-12h-7l4-8Z' fill='#d2fc4b' strokeWidth='2' />
+      <polygon points={HEX_OUTER} fill={CREAM} />
+      <polygon points={HEX_INNER} fill='#ffe4c4' style={NO_STROKE} />
+      <Mark d={MARKS.workers} size={21} fill='#f38020' />
+      <Gloss d='M11.6 18.6v-2l7.2-4.2' />
     </svg>
   ),
   jellyfin: (
-    <svg viewBox='0 0 48 48' aria-hidden='true'>
-      <circle cx='24' cy='24' r='21' fill='#bce3ff' />
-      <path
-        d='M24 10c-5.5 8-12 16-8 23 2.5 4.5 13.5 4.5 16 0 4-7-2.5-15-8-23Z'
-        fill='#6b4cb8'
-      />
-      <path
-        d='M24 18c-3 4.5-6.5 9-4.5 13 1.5 2.5 7.5 2.5 9 0 2-4-1.5-8.5-4.5-13Z'
-        fill='#dfd2fb'
-      />
-    </svg>
+    <Disc tint='#efe8ff'>
+      <Mark d={MARKS.jellyfinOuter} size={26} cy={24.4} fill='#8f56c9' />
+      <Mark d={MARKS.jellyfinInner} size={26} cy={24.4} fill='#1fa1db' />
+    </Disc>
   )
 }
 
@@ -207,6 +241,55 @@ const DOODLES = {
     <svg viewBox='0 0 32 32' aria-hidden='true'>
       <path d='M16 3v26M3 16h26M7 7l18 18M25 7 7 25' />
     </svg>
+  )
+}
+
+// Rubber stamp: circular ring text + bold centre value, slightly roughened edges
+const STAMP_RING = 2 * Math.PI * 37.5
+const Stamp = ({ it, className, style }) => {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const ringId = `stamp-ring-${uid}`
+  const roughId = `stamp-rough-${uid}`
+  const unit = `${it.text} · ${it.sub} · `
+  const ring = unit.length < 22 ? unit + unit : unit
+  const ringSize = Math.min(10.5, STAMP_RING / (ring.length * 0.66))
+  const big = String(it.big || '')
+  const bigSize = big.length <= 2 ? 30 : big.length <= 3 ? 24 : 19
+  return (
+    <li className={className} style={style}>
+      <svg viewBox='0 0 100 100' aria-hidden='true'>
+        <defs>
+          <path id={ringId} d='M50 50m-37.5 0a37.5 37.5 0 1 1 75 0a37.5 37.5 0 1 1-75 0' />
+          <filter id={roughId} x='-6%' y='-6%' width='112%' height='112%'>
+            <feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='7' />
+            <feDisplacementMap in='SourceGraphic' scale='1.4' />
+          </filter>
+        </defs>
+        <g filter={`url(#${roughId})`}>
+          <circle cx='50' cy='50' r='47' fill='none' stroke='currentColor' strokeWidth='3.4' />
+          <circle cx='50' cy='50' r='28.5' fill='none' stroke='currentColor' strokeWidth='1.6' />
+          <text fontSize={ringSize} fill='currentColor' letterSpacing='.6'>
+            <textPath href={`#${ringId}`} textLength={STAMP_RING - 4} lengthAdjust='spacing'>
+              {ring}
+            </textPath>
+          </text>
+          <text x='50' y='36' fontSize='6.5' fill='currentColor' textAnchor='middle' letterSpacing='2'>
+            ★★★
+          </text>
+          <text
+            x='50'
+            y={50 + bigSize * 0.36}
+            fontSize={bigSize}
+            fill='currentColor'
+            textAnchor='middle'
+            className='lab-stamp-big'
+          >
+            {big}
+          </text>
+          <path d='M38 66h24' stroke='currentColor' strokeWidth='1.6' />
+        </g>
+      </svg>
+    </li>
   )
 }
 
@@ -232,11 +315,11 @@ const Piece = ({ it }) => {
   }
   if (it.t === 'stamp') {
     return (
-      <li className={`lab-stamp lab-stamp-${it.kind || 'red'}${minor}`} style={style}>
-        <span>{it.text}</span>
-        <b>{it.big}</b>
-        <small>{it.sub}</small>
-      </li>
+      <Stamp
+        it={it}
+        className={`lab-stamp lab-stamp-${it.kind || 'red'}${minor}`}
+        style={style}
+      />
     )
   }
   return (

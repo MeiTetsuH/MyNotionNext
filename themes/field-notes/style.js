@@ -448,29 +448,15 @@ a,button,summary{touch-action:manipulation}
   --c:#d9402f;
   width:calc(var(--u)*1.35);
   aspect-ratio:1;
-  border-radius:50%;
-  border:2px solid var(--c);
-  box-shadow:inset 0 0 0 2.5px #fffef8,inset 0 0 0 4px var(--c);
   color:var(--c);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:1px;
-  text-align:center;
-  white-space:nowrap;
-  font-family:ui-monospace,Menlo,monospace;
-  font-weight:800;
-  opacity:.92;
+  opacity:.88;
   mix-blend-mode:multiply;
   cursor:default;
-  padding:2px;
-  box-sizing:border-box;
   user-select:none;
 }
-#now .lab-stamp span{font-size:calc(var(--u)*.14);letter-spacing:.4px;line-height:1}
-#now .lab-stamp b{font-size:calc(var(--u)*.36);line-height:1;letter-spacing:.5px;font-weight:900}
-#now .lab-stamp small{font-size:calc(var(--u)*.13);letter-spacing:.5px;line-height:1}
+#now .lab-stamp svg{display:block;width:100%;height:100%;overflow:visible}
+#now .lab-stamp text{font-family:ui-monospace,Menlo,monospace;font-weight:800}
+#now .lab-stamp .lab-stamp-big{font-weight:900;letter-spacing:.5px}
 #now .lab-stamp-red{--c:#d9402f}
 #now .lab-stamp-green{--c:#1e9e54}
 #now .lab-stamp-blue{--c:#2a69ac}
