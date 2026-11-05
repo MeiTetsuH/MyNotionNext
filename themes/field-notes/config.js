@@ -15,6 +15,11 @@ const CONFIG = {
   MENU_SEARCH: true,
 
   // 首页展示文章数量
-  HOME_ARTICLE_COUNT: 6
+  HOME_ARTICLE_COUNT: 6,
+
+  // Hero copy that can be edited from the Notion config table.
+  // Format: "中文 || English || 日本語"; empty falls back to the built-in translations
+  FIELD_NOTES_STATUS: null,
+  FIELD_NOTES_SCRIBBLE: null
 }
 export default CONFIG

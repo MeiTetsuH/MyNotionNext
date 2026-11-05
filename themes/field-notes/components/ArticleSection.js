@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useLang } from './LangContext'
+import { RisoCover } from './RisoCover'
 import { localizeCategory, localizeTag } from '../data'
 
 // Home shows one featured note plus a single full row; the rest live in the archive
@@ -164,7 +165,7 @@ export const ArticleSection = ({ posts = [] }) => {
                   style={{ display: 'block', overflow: 'hidden' }}
                 >
                   {featuredPost.pageCoverThumbnail || featuredPost.pageCover ? (
-                    <img
+                    <RisoCover
                       className='featured-note-cover'
                       src={featuredPost.pageCoverThumbnail || featuredPost.pageCover}
                       alt={featuredPost.localizedTitle || featuredPost.title || ''}
@@ -217,7 +218,8 @@ export const ArticleSection = ({ posts = [] }) => {
                     </div>
 
                     {post.pageCoverThumbnail || post.pageCover ? (
-                      <img
+                      <RisoCover
+                        frameClassName='is-memo'
                         className='note-memo-cover'
                         src={post.pageCoverThumbnail || post.pageCover}
                         alt={post.localizedTitle || post.title || ''}

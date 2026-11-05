@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { useLang } from './LangContext'
 import { StackStickers } from './StackStickers'
-import { LabFigure } from './LabFigure'
+import { LabFigure, LabNoteCard, LabStickerStrip } from './LabFigure'
 
 export const NowSection = () => {
   const { t } = useLang()
   const [notebookOpen, setNotebookOpen] = useState(false)
+  const [activeTag, setActiveTag] = useState(null)
 
   return (
     <section className='now-section wrap home-lab' id='now' aria-labelledby='now-title'>
@@ -13,10 +14,14 @@ export const NowSection = () => {
         className={`now-paper${notebookOpen ? ' is-notebook-open' : ''}`}
         data-notebook-open={notebookOpen ? 'true' : 'false'}
       >
-        <div className='lab-art' aria-hidden='true'>
-          <span className='lab-art-label mono'>HOME LAB / 2026</span>
-          <LabFigure />
-          <span className='lab-handwritten'>a little studio, at home.</span>
+        <div className='lab-art'>
+          <span className='lab-art-label mono' aria-hidden='true'>
+            HOME LAB / 2026
+          </span>
+          <LabFigure activeId={activeTag} onSelect={setActiveTag} />
+          <span className='lab-handwritten' aria-hidden='true'>
+            a little studio, at home.
+          </span>
 
           <StackStickers variant='art' />
         </div>
@@ -70,6 +75,9 @@ export const NowSection = () => {
               </div>
             </li>
           </ol>
+
+          <LabNoteCard activeId={activeTag} onClose={() => setActiveTag(null)} />
+          <LabStickerStrip />
 
           <details
             className='lab-notebook'

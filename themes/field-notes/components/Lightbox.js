@@ -1,7 +1,29 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import Link from 'next/link'
 import { useLang } from './LangContext'
 import { heroPhotos } from './constants'
+import { extractNoteLines } from '../data'
+
+// Body lines that only repeat what the back already prints as fields
+const META_LINE = /^(地点|地點|器材|参数|參數|日期|拍摄|place|location|camera|gear|settings|exposure|date|場所|機材|カメラ|設定|日付)\s*[:：]/i
+const noteCache = new Map()
+
+/** Load a photo page's Notion body through Next's data route (same JSON the router uses). */
+const loadNoteLines = async (href, lang) => {
+  const buildId = typeof window !== 'undefined' ? window.__NEXT_DATA__?.buildId : null
+  if (!buildId || !href || /^https?:/i.test(href)) return []
+  const path = String(href).replace(/[?#].*$/, '').replace(/\/$/, '')
+  const key = `${path}|${lang}`
+  if (noteCache.has(key)) return noteCache.get(key)
+  const res = await fetch(`/_next/data/${buildId}${path}.json`)
+  if (!res.ok) return []
+  const data = await res.json()
+  const post = data?.pageProps?.post
+  const lines = post?.blockMap ? extractNoteLines(post.blockMap, post.id, lang) : []
+  noteCache.set(key, lines)
+  return lines
+}
+
 
 export const Lightbox = ({
   viewerState,
@@ -10,12 +32,19 @@ export const Lightbox = ({
   photoList = [],
   projectList = []
 }) => {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const dialogRef = useRef(null)
   const imgRef = useRef(null)
 
   const { open, mode, index, screen, projectIndex } = viewerState
   const prevActiveElementRef = useRef(null)
+  const [flipped, setFlipped] = useState(false)
+  const [noteLines, setNoteLines] = useState(null)
+
+  // Every new print starts face up
+  useEffect(() => {
+    setFlipped(false)
+  }, [open, mode, index, screen, projectIndex])
 
   const updateViewerRatio = useCallback(() => {
     const dialog = dialogRef.current
@@ -81,7 +110,9 @@ export const Lightbox = ({
   let title = ''
   let indexText = ''
   let caption = ''
+  let meta = ''
   let articleLink = null
+  let back = null
 
   if (mode === 'photo') {
     const photo = photoList[index]
@@ -89,15 +120,18 @@ export const Lightbox = ({
       imgSrc = photo.fullSrc || photo.thumbSrc || ''
       alt = photo.alt || photo.title || ''
       title = photo.title || ''
-      indexText = `FIELD NOTES / ${String(index + 1).padStart(2, '0')} — ${String(photoList.length).padStart(2, '0')}`
-      const desc = photo.description ? `${photo.description}\n` : ''
-      caption =
-        desc +
-        [photo.place, photo.date, photo.camera, photo.settings]
-          .filter(Boolean)
-          .join(' · ')
-      if (photo.isNotion && (photo.href || photo.slug)) {
-        articleLink = photo.href || `/${photo.slug}`
+      indexText = `${String(index + 1).padStart(2, '0')} / ${String(photoList.length).padStart(2, '0')}`
+      caption = photo.description || ''
+      meta = [photo.place, photo.date].filter(Boolean).join(' · ')
+      back = {
+        title,
+        place: photo.place,
+        date: photo.date,
+        camera: photo.camera,
+        settings: photo.settings,
+        description: photo.description,
+        no: indexText,
+        href: photo.isNotion ? photo.href || (photo.slug ? `/${photo.slug}` : null) : null
       }
     }
   } else if (mode === 'hero') {
@@ -106,13 +140,17 @@ export const Lightbox = ({
       imgSrc = `/themes/field-notes/assets/${photo.file}.jpg`
       alt = t(photo.key + 'Alt')
       title = t(photo.key + 'Title')
-      indexText = `OFFLINE MOMENTS / 0${index + 1} — 02`
-      caption =
-        t(photo.key + 'Desc') +
-        '\n' +
-        [t(photo.key + 'Place'), photo.date, photo.camera]
-          .filter(Boolean)
-          .join(' · ')
+      indexText = `0${index + 1} / 02`
+      caption = t(photo.key + 'Desc')
+      meta = [t(photo.key + 'Place'), photo.date].filter(Boolean).join(' · ')
+      back = {
+        title,
+        place: t(photo.key + 'Place'),
+        date: photo.date,
+        camera: photo.camera,
+        description: t(photo.key + 'Desc'),
+        no: indexText
+      }
     }
   } else {
     const proj = projectList[projectIndex || 0]
@@ -128,13 +166,41 @@ export const Lightbox = ({
         : `/themes/field-notes/assets/${proj.files ? proj.files[screenIdx] : 'r2-share'}.jpg`
       alt = (proj.alts && proj.alts[screenIdx]) || proj.name
       title = `${proj.name} / ${(proj.screens && proj.screens[screenIdx]) || 'SCREEN'}`
-      indexText = `SELECTED PROJECT / ${String((projectIndex || 0) + 1).padStart(3, '0')}`
+      indexText = `PROJECT ${String((projectIndex || 0) + 1).padStart(3, '0')}`
       caption = proj.caption || proj.desc || ''
       if (proj.url) {
         articleLink = proj.url
       }
     }
   }
+
+  // The back of a Notion photo is its page body: fetch it the first time the print is flipped
+  const noteHref = back?.href || null
+  useEffect(() => {
+    setNoteLines(null)
+  }, [noteHref, lang])
+  useEffect(() => {
+    if (!flipped || !noteHref || noteLines !== null) return undefined
+    let cancelled = false
+    loadNoteLines(noteHref, lang)
+      .then(lines => {
+        if (!cancelled) setNoteLines(lines)
+      })
+      .catch(() => {
+        if (!cancelled) setNoteLines([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [flipped, noteHref, lang, noteLines])
+
+  const normalize = v => String(v || '').replace(/\s+/g, '').toLowerCase()
+  const extraLines = (noteLines || []).filter(
+    l =>
+      !META_LINE.test(l.text) &&
+      normalize(l.text) !== normalize(back?.description) &&
+      normalize(l.text) !== normalize(back?.title)
+  )
 
   const showNav = mode === 'photo' || mode === 'hero'
   const isExtLink = articleLink && /^https?:\/\//i.test(String(articleLink))
@@ -143,6 +209,7 @@ export const Lightbox = ({
     <dialog
       ref={dialogRef}
       id='viewer'
+      className={back ? 'is-polaroid' : ''}
       aria-labelledby='viewer-title'
       onClose={onClose}
       onClick={e => {
@@ -168,75 +235,138 @@ export const Lightbox = ({
         ×
       </button>
 
-      <div className='viewer-image-wrap'>
+      <div
+        className={`viewer-image-wrap ${back ? 'is-flippable' : ''} ${flipped ? 'is-flipped' : ''}`}>
         <img
+          key={imgSrc}
           ref={imgRef}
           id='viewer-image'
+          className={mode === 'screen' ? '' : 'is-developing'}
           src={imgSrc}
           alt={alt}
           onLoad={updateViewerRatio}
         />
+        {back && (
+          <div className='viewer-back' aria-hidden={!flipped}>
+            <span className='viewer-back-stamp mono'>
+              FIELD NOTES
+              <br />
+              No. {back.no}
+            </span>
+            <p className='viewer-back-title'>{back.title}</p>
+            {back.description && (
+              <p className='viewer-back-desc'>{back.description}</p>
+            )}
+            {extraLines.length > 0 && (
+              <div className='viewer-back-note'>
+                {extraLines.map((l, i) => (
+                  <p key={i} className={`is-${l.type}`}>
+                    {l.text}
+                  </p>
+                ))}
+              </div>
+            )}
+            <ul className='viewer-back-lines'>
+              {back.place && (
+                <li>
+                  <b className='mono'>{t('backPlace')}</b>
+                  <span>{back.place}</span>
+                </li>
+              )}
+              {back.date && (
+                <li>
+                  <b className='mono'>{t('backDate')}</b>
+                  <span>{back.date}</span>
+                </li>
+              )}
+              {back.camera && (
+                <li>
+                  <b className='mono'>{t('backCamera')}</b>
+                  <span>{back.camera}</span>
+                </li>
+              )}
+              {back.settings && (
+                <li>
+                  <b className='mono'>{t('backSettings')}</b>
+                  <span>{back.settings}</span>
+                </li>
+              )}
+            </ul>
+            <span className='viewer-back-sign'>— H.mz</span>
+          </div>
+        )}
+        {showNav && (
+          <>
+            <button
+              type='button'
+              id='prev-photo'
+              className='viewer-nav is-prev'
+              aria-label={t('prev')}
+              onClick={() => onStep(-1)}
+            >
+              ←
+            </button>
+            <button
+              type='button'
+              id='next-photo'
+              className='viewer-nav is-next'
+              aria-label={t('next')}
+              onClick={() => onStep(1)}
+            >
+              →
+            </button>
+          </>
+        )}
       </div>
 
+      {/* The white bottom margin of the print: what I would write on it */}
       <div className='viewer-caption-bar'>
         <div className='viewer-title-row'>
           <h2 id='viewer-title'>{title}</h2>
-          {articleLink && (
+          {back ? (
             <div className='viewer-action'>
-              {isExtLink ? (
-                <a
-                  href={articleLink}
-                  className='button ink viewer-link-btn'
-                  onClick={onClose}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  <span>{t('viewProjectLink')}</span>
-                </a>
-              ) : (
-                <Link
-                  href={articleLink}
-                  className='button ink viewer-link-btn'
-                  onClick={onClose}
-                >
-                  <span>{t('viewNoteLink')}</span>
-                </Link>
-              )}
+              <button
+                type='button'
+                className='button ink viewer-link-btn viewer-flip-btn'
+                aria-pressed={flipped}
+                onClick={() => setFlipped(f => !f)}
+              >
+                <span>{flipped ? t('flipFront') : t('flipBack')}</span>
+                <span aria-hidden='true'>↻</span>
+              </button>
             </div>
+          ) : (
+            articleLink && (
+              <div className='viewer-action'>
+                {isExtLink ? (
+                  <a
+                    href={articleLink}
+                    className='button ink viewer-link-btn'
+                    onClick={onClose}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    <span>{t('viewProjectLink')}</span>
+                  </a>
+                ) : (
+                  <Link
+                    href={articleLink}
+                    className='button ink viewer-link-btn'
+                    onClick={onClose}
+                  >
+                    <span>{t('viewNoteLink')}</span>
+                  </Link>
+                )}
+              </div>
+            )
           )}
         </div>
 
-        <p id='viewer-caption'>{caption}</p>
-      </div>
-
-      <div className='viewer-footer'>
-        {showNav ? (
-          <button
-            type='button'
-            id='prev-photo'
-            aria-label={t('prev')}
-            onClick={() => onStep(-1)}
-          >
-            ←
-          </button>
-        ) : (
-          <span />
-        )}
-        <span className='mono' id='viewer-index'>
-          {indexText}
-        </span>
-        {showNav ? (
-          <button
-            type='button'
-            id='next-photo'
-            aria-label={t('next')}
-            onClick={() => onStep(1)}
-          >
-            →
-          </button>
-        ) : (
-          <span />
-        )}
+        {caption && <p id='viewer-caption'>{caption}</p>}
+        <div className='viewer-meta-row mono'>
+          <span>{meta}</span>
+          <span id='viewer-index'>{indexText}</span>
+        </div>
       </div>
     </dialog>
   )

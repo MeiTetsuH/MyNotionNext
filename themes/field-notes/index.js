@@ -28,6 +28,9 @@ import { WorkSection } from './components/WorkSection'
 import { Closing, Footer } from './components/Footer'
 import { Lightbox } from './components/Lightbox'
 import { ArticleToc } from './components/ArticleToc'
+import { RisoCover } from './components/RisoCover'
+import { ContactSheet } from './components/ContactSheet'
+import { NotebookStyle } from './notebook-style'
 import { heroPhotos } from './components/constants'
 
 import {
@@ -37,6 +40,7 @@ import {
   formatNotionDate,
   getCombinedPhotos,
   getLocalizedBlogPosts,
+  getPostSection,
   localizeCategory,
   localizeTag,
   parseMultiLang,
@@ -372,7 +376,8 @@ const LayoutBaseInner = props => {
       openViewer('photo', Math.min(totalPhotos - 1, windowStart + visiblePhotos.length))
       return
     }
-    openViewer('photo', scrollActiveIdx)
+    // End of the rope: unroll the whole film as a contact sheet
+    router.push(`/category/${encodeURIComponent('拍的照片')}`)
   }
 
   const contextValue = useMemo(
@@ -403,6 +408,7 @@ const LayoutBaseInner = props => {
     <FieldNotesContext.Provider value={contextValue}>
       <div id='theme-field-notes'>
         <Style />
+        <NotebookStyle />
 
         {/* Left progressive Polaroid rope (4-card sliding window on desktop & peeking corner on mobile) */}
         <aside
@@ -417,9 +423,7 @@ const LayoutBaseInner = props => {
               openViewer('photo', scrollActiveIdx)
             }}
           >
-            <span className='rope-cam-emoji' aria-hidden='true'>
-              📷
-            </span>
+            <span className='rope-film-can' aria-hidden='true' />
             <span>
               {String(scrollActiveIdx + 1).padStart(2, '0')}/
               {String(totalPhotos).padStart(2, '0')}
@@ -814,7 +818,7 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
             {coverImg && (
               <div className='article-cover-polaroid'>
                 <span className='article-cover-tape' aria-hidden='true' />
-                <img src={coverImg} alt={displayTitle} />
+                <RisoCover src={coverImg} alt={displayTitle} />
                 <div className='article-cover-caption mono'>
                   <span>FIG. COVER — SNAPSHOT</span>
                   <span>{formattedDate || 'FIELD NOTE'}</span>
@@ -889,6 +893,11 @@ const LayoutSlug = props => <ArticleDetail {...props} />
 const LayoutPostList = props => {
   const { posts = [], category, tag } = props
   const { lang, t } = useLang()
+  const { combinedPhotos = [], openViewer } = useFieldNotes() || {}
+  const isPhotoRoll =
+    Boolean(category) &&
+    getPostSection({ category }) === 'photo' &&
+    combinedPhotos.length > 0
 
   const visiblePosts = useMemo(() => {
     const base =
@@ -906,6 +915,23 @@ const LayoutPostList = props => {
     : tag
     ? `#${localizeTag(tag, lang)}`
     : t('allNotes')
+
+  if (isPhotoRoll) {
+    return (
+      <div className='wrap' style={{ padding: '40px 0 80px' }}>
+        <div className='article-top-bar'>
+          <Link href='/' className='button ink'>
+            <span>{t('backToLab')}</span>
+          </Link>
+          <span className='mono'>CONTACT SHEET // {combinedPhotos.length} FRAMES</span>
+        </div>
+        <ContactSheet
+          photos={combinedPhotos}
+          onOpen={idx => openViewer && openViewer('photo', idx)}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className='wrap' style={{ padding: '40px 0 80px' }}>
@@ -947,7 +973,8 @@ const LayoutPostList = props => {
               </div>
 
               {post.pageCoverThumbnail || post.pageCover ? (
-                <img
+                <RisoCover
+                  frameClassName='is-memo'
                   className='note-memo-cover'
                   src={post.pageCoverThumbnail || post.pageCover}
                   alt={parseMultiLang(post.title || '', lang)}

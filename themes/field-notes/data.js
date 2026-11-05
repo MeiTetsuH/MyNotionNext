@@ -978,3 +978,54 @@ export function parseNotionWorkProject(page, lang = 'zh', t = k => k) {
     caption: `${name} · ${screenshotSuffix}`
   }
 }
+
+const NOTE_TEXT_TYPES = new Set([
+  'text',
+  'bulleted_list',
+  'numbered_list',
+  'quote',
+  'callout',
+  'header',
+  'sub_header',
+  'sub_sub_header',
+  'to_do',
+  'toggle'
+])
+
+/**
+ * Plain-text lines of a Notion page body in the active language, in reading
+ * order. Used for the handwritten back of a photo print, so media blocks are
+ * skipped and nested list items are flattened.
+ */
+export function extractNoteLines(blockMap, postId, lang = 'zh') {
+  const { blockMap: resolved } = resolveLocalizedBlockMap(blockMap, postId, lang)
+  const blocks = resolved?.block || {}
+  const lookup = new Map(Object.keys(blocks).map(k => [normalizeNotionId(k), k]))
+  const getVal = id => blocks[id]?.value || blocks[lookup.get(normalizeNotionId(id))]?.value
+  let root = postId ? getVal(postId) : null
+  if (!root || root.type !== 'page') {
+    root = Object.values(blocks)
+      .map(b => b?.value)
+      .find(v => v?.type === 'page')
+  }
+  const lines = []
+  const seen = new Set()
+  const walk = (ids, depth) => {
+    if (!Array.isArray(ids) || depth > 4) return
+    for (const id of ids) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      const val = getVal(id)
+      if (!val || val.alive === false) continue
+      if (NOTE_TEXT_TYPES.has(val.type)) {
+        const text = getBlockPlainText(val).trim()
+        if (text && !/^\[(ZH|EN|JA)\]$/i.test(text)) {
+          lines.push({ type: val.type, text })
+        }
+      }
+      if (val.type !== 'page') walk(val.content, depth + 1)
+    }
+  }
+  walk(root?.content, 0)
+  return lines
+}

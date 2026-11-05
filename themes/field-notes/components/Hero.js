@@ -1,8 +1,19 @@
 import React from 'react'
+import { siteConfig } from '@/lib/config'
 import { useLang } from './LangContext'
+import { parseMultiLang } from '../data'
+import CONFIG from '../config'
+
+// Optional overrides from the Notion config table, written as "中文 || English || 日本語"
+const notionText = (key, lang) => {
+  const raw = siteConfig(key, null, CONFIG)
+  return raw ? parseMultiLang(String(raw), lang) : null
+}
 
 export const Hero = ({ onOpenHeroPhoto }) => {
-  const { t } = useLang()
+  const { t, lang } = useLang()
+  const statusText = notionText('FIELD_NOTES_STATUS', lang) || t('status')
+  const scribbleText = notionText('FIELD_NOTES_SCRIBBLE', lang) || t('scribble')
 
   return (
     <section className='hero wrap' aria-labelledby='hero-title'>
@@ -33,12 +44,12 @@ export const Hero = ({ onOpenHeroPhoto }) => {
           </a>
           <div className='hero-foot mono'>
             <span className='status-dot'></span>
-            <span>{t('status')}</span>
+            <span>{statusText}</span>
           </div>
         </div>
 
         <div className='collage' aria-label='Photography collage'>
-          <span className='scribble-note'>{t('scribble')}</span>
+          <span className='scribble-note'>{scribbleText}</span>
           <svg className='scribble-arrow' viewBox='0 0 130 90' aria-hidden='true'>
             <path d='M5 8C89 0 115 35 61 62M63 44L58 68 83 67' />
           </svg>

@@ -4,9 +4,11 @@ import {
   formatNotionDate,
   getLocalizedBlogPosts,
   createTranslator,
-  parseNotionWorkProject
+  parseNotionWorkProject,
+  extractNoteLines
 } from '@/themes/field-notes/data'
 import { generateStructuredData, pickPrimaryLanguage } from '@/components/SEO'
+import { labSchedule, formatClock } from '@/themes/field-notes/components/LabFigure'
 
 describe('Field Notes Theme Validations & Bug Fixes', () => {
   describe('parseMultiLang & parsePhotoSummary', () => {
@@ -135,6 +137,61 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
       expect(pickPrimaryLanguage('mail me @ a@b.com')).toBe('mail me @ a@b.com')
       expect(pickPrimaryLanguage(undefined)).toBeUndefined()
       expect(pickPrimaryLanguage('')).toBe('')
+    })
+  })
+
+  describe('labSchedule on the Tokyo day', () => {
+    const at = (h, m, sec = 0) => h * 3600 + m * 60 + sec
+
+    test('counts down to the next job to the second', () => {
+      const s = labSchedule(at(18, 36, 1))
+      expect(s.busy).toBeNull()
+      expect(s.next.id).toBe('trend')
+      expect(s.next.at).toBe('20:00')
+      expect(formatClock(s.left)).toBe('01:23:59')
+    })
+
+    test('reports the job in progress and what it lights up', () => {
+      const s = labSchedule(at(16, 40, 5))
+      expect(s.busy.id).toBe('health')
+      expect(formatClock(s.elapsed)).toBe('00:10:05')
+      expect(s.links.has('tailscale')).toBe(true)
+      expect(s.nodes.has('muse')).toBe(true)
+    })
+
+    test('heartbeat every 10 minutes and photo sync on the hour', () => {
+      const s = labSchedule(at(13, 0, 30))
+      expect(s.links.has('tunnel')).toBe(true)
+      expect(s.links.has('photo')).toBe(true)
+      const later = labSchedule(at(13, 7, 0))
+      expect(later.links.has('tunnel')).toBe(false)
+      expect(later.beatLeft).toBe(180)
+      expect(later.photoLeft).toBe(53 * 60)
+    })
+
+    test('wraps to tomorrow morning after the last job', () => {
+      const s = labSchedule(at(23, 0))
+      expect(s.next.id).toBe('snapshot')
+      expect(formatClock(s.left)).toBe('04:00:00')
+    })
+  })
+
+  describe('extractNoteLines for the back of a photo', () => {
+    const blockMap = {
+      block: {
+        p1: { value: { id: 'p1', type: 'page', content: ['t1', 'img', 't2'] } },
+        t1: { value: { id: 't1', type: 'text', properties: { title: [['Blue sky, red shrine.']] } } },
+        img: { value: { id: 'img', type: 'image', properties: { title: [['ignored']] } } },
+        t2: { value: { id: 't2', type: 'bulleted_list', properties: { title: [['Place: Shizuoka']] }, content: ['t3'] } },
+        t3: { value: { id: 't3', type: 'text', properties: { title: [['nested line']] } } }
+      }
+    }
+    test('keeps text blocks in order, flattens children and skips media', () => {
+      expect(extractNoteLines(blockMap, 'p1', 'en')).toEqual([
+        { type: 'text', text: 'Blue sky, red shrine.' },
+        { type: 'bulleted_list', text: 'Place: Shizuoka' },
+        { type: 'text', text: 'nested line' }
+      ])
     })
   })
 })
