@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { useLang } from './LangContext'
 import { localizeCategory, localizeTag } from '../data'
 
+// Home shows one featured note plus a single full row; the rest live in the archive
+const HOME_GRID_LIMIT = 3
+
 export const ArticleSection = ({ posts = [] }) => {
   const { lang, t } = useLang()
   const [activeCategory, setActiveCategory] = useState('all')
@@ -24,7 +27,8 @@ export const ArticleSection = ({ posts = [] }) => {
   }, [posts, activeCategory])
 
   const featuredPost = filteredPosts.length > 0 ? filteredPosts[0] : null
-  const gridPosts = filteredPosts.length > 1 ? filteredPosts.slice(1) : []
+  const gridPosts =
+    filteredPosts.length > 1 ? filteredPosts.slice(1, 1 + HOME_GRID_LIMIT) : []
 
   return (
     <section
@@ -138,7 +142,7 @@ export const ArticleSection = ({ posts = [] }) => {
                   </div>
                 )}
 
-                <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
+                <div className='featured-note-actions'>
                   <Link
                     href={featuredPost.href || `/${featuredPost.slug || featuredPost.id}`}
                     className='button ink'
@@ -187,7 +191,7 @@ export const ArticleSection = ({ posts = [] }) => {
 
           {/* Grid of Note Memos with Washi Tape */}
           {gridPosts.length > 0 && (
-            <div className='notes-memo-grid'>
+            <div className='notes-memo-grid is-home'>
               {gridPosts.map((post, idx) => {
                 const postDate =
                   post.formattedDate ||

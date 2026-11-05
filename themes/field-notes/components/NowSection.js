@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useLang } from './LangContext'
 import { StackStickers } from './StackStickers'
+import { LabFigure } from './LabFigure'
 
 export const NowSection = () => {
   const { t } = useLang()
@@ -14,15 +15,7 @@ export const NowSection = () => {
       >
         <div className='lab-art' aria-hidden='true'>
           <span className='lab-art-label mono'>HOME LAB / 2026</span>
-          <img
-            className='lab-devices'
-            src='/themes/field-notes/assets/home-lab-devices.png'
-            alt=''
-            width='1197'
-            height='1314'
-            loading='lazy'
-            decoding='async'
-          />
+          <LabFigure />
           <span className='lab-handwritten'>a little studio, at home.</span>
 
           <StackStickers variant='art' />

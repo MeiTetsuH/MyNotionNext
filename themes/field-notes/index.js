@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from 'react'
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  createContext,
+  useContext
+} from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -19,6 +27,7 @@ import { ArticleSection } from './components/ArticleSection'
 import { WorkSection } from './components/WorkSection'
 import { Closing, Footer } from './components/Footer'
 import { Lightbox } from './components/Lightbox'
+import { ArticleToc } from './components/ArticleToc'
 import { heroPhotos } from './components/constants'
 
 import {
@@ -397,7 +406,7 @@ const LayoutBaseInner = props => {
 
         {/* Left progressive Polaroid rope (4-card sliding window on desktop & peeking corner on mobile) */}
         <aside
-          className={`polaroid-rope-rail ${ropeHighlight ? 'rope-attention' : ''} ${mobileExpanded ? 'is-mobile-expanded' : ''}`}
+          className={`polaroid-rope-rail ${ropeHighlight ? 'rope-attention' : ''} ${mobileExpanded ? 'is-mobile-expanded' : ''} ${isArticlePage ? 'is-article-mode' : ''}`}
           aria-label='Polaroid photo timeline rope'
         >
           <button
@@ -603,6 +612,10 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
     () => resolveLocalizedBlockMap(post?.blockMap, post?.id, lang),
     [post?.blockMap, post?.id, lang]
   )
+  const [hasToc, setHasToc] = useState(false)
+  const handleTocAvailability = useCallback(available => {
+    setHasToc(available)
+  }, [])
 
   useEffect(() => {
     if (!post?.slug || !allLocalizedItems?.length) return
@@ -810,25 +823,37 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
             )}
           </header>
 
-          <div id='article-wrapper' className='article-body'>
-            {lock ? (
-              <ArticleLock validPassword={validPassword} />
-            ) : (
-              <>
-                <NotionPage
-                  key={`${post.id}-${localizedResolution.activeLang}`}
-                  post={localizedPost}
-                />
-                <ShareBar post={localizedPost} />
-              </>
+          <div className={`article-reading ${hasToc ? 'has-toc' : ''}`}>
+            <div className='article-reading-main'>
+              <div id='article-wrapper' className='article-body'>
+                {lock ? (
+                  <ArticleLock validPassword={validPassword} />
+                ) : (
+                  <>
+                    <NotionPage
+                      key={`${post.id}-${localizedResolution.activeLang}`}
+                      post={localizedPost}
+                    />
+                    <ShareBar post={localizedPost} />
+                  </>
+                )}
+              </div>
+
+              {!lock && (
+                <div className='article-comments'>
+                  <Comment frontMatter={post} />
+                </div>
+              )}
+            </div>
+
+            {!lock && (
+              <ArticleToc
+                containerId='article-wrapper'
+                contentKey={`${post.id}-${localizedResolution.activeLang}`}
+                onAvailabilityChange={handleTocAvailability}
+              />
             )}
           </div>
-
-          {!lock && (
-            <div style={{ marginTop: 36 }}>
-              <Comment frontMatter={post} />
-            </div>
-          )}
         </div>
       </div>
 

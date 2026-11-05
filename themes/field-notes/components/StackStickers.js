@@ -452,4 +452,5 @@ export const StackStickers = ({ variant = 'art' }) => {
     </div>
   )
 }
+export { ICONS as STICKER_ICONS }
 export default StackStickers
