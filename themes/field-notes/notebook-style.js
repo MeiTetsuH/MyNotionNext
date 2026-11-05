@@ -967,309 +967,62 @@ export const NotebookStyle = () => (
       stroke-width: 2.4;
     }
 
-    /* ---------- Home Lab scene (hand-drawn SVG) ---------- */
+    /* ---------- Home Lab: supplied artwork + live layer ---------- */
     #now .lab-art {
       justify-content: space-between;
     }
     #now .lab-stage {
       width: 100%;
       display: grid;
-      gap: 18px;
+      gap: 14px;
     }
     #now .lab-figure {
+      position: relative;
       width: 100%;
       margin: 0;
     }
-    #now .lab-scene,
+    #now .lab-art-img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    #now .lab-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+    #now .lab-overlay text,
+    #now .lab-ruler text {
+      font-family: 'SFMono-Regular', Menlo, Consolas, 'PingFang SC', 'Hiragino Sans', monospace;
+    }
     #now .lab-ruler {
       display: block;
       width: 100%;
       height: auto;
       overflow: visible;
     }
-    #now .lab-scene text,
-    #now .lab-ruler text {
-      font-family: 'SFMono-Regular', Menlo, Consolas, 'PingFang SC', 'Hiragino Sans', monospace;
-    }
-    #now .lab-shadow {
-      fill: var(--ink);
-    }
-    #now .lab-card,
-    #now .lab-imac,
-    #now .lab-phone,
-    #now .lab-nas-side,
-    #now .lab-nas-top,
-    #now .lab-bay,
-    #now .lab-chip {
-      stroke: var(--ink);
-      stroke-width: 2.6;
-      stroke-linejoin: round;
-    }
-    #now .lab-card {
-      fill: #fffdf5;
-    }
-    #now .lab-imac {
-      fill: #8ec5ff;
-    }
-    #now .lab-screen {
-      fill: #161714;
-      stroke: #3a3b35;
-      stroke-width: 2;
-    }
-    #now .lab-nas-top {
-      fill: #efe9d8;
-    }
-    #now .lab-nas-side {
-      fill: #ddd6c2;
-    }
-    #now .lab-bay {
-      fill: #f5f2e9;
-    }
-    #now .lab-chip {
-      fill: #f2fdc5;
-      stroke-width: 1.8;
-    }
-    #now .lab-chip.is-alt {
-      fill: #ebe3ff;
-    }
-    #now .lab-chip-text {
-      font-size: 11px;
-      fill: var(--ink);
-    }
-    #now .lab-label {
-      font-size: 16px;
-      font-weight: 800;
-      fill: var(--ink);
-    }
-    #now .lab-label.is-strike {
-      text-decoration: line-through;
-    }
-    #now .lab-sub {
-      font-size: 12px;
-      fill: #4c4d46;
-    }
-    #now .lab-hand {
-      font-family: 'Kaiti SC', 'STKaiti', 'YuMincho', Georgia, serif !important;
-      font-size: 16px;
-      fill: #2f3a12;
-    }
-    #now .lab-hand.is-small {
-      font-size: 14px;
-    }
-    #now .lab-zone {
-      stroke: var(--ink);
-      stroke-width: 1.6;
-      stroke-dasharray: 2 7;
-      stroke-linecap: round;
-      opacity: 0.55;
-    }
-    #now .lab-zone-label {
-      font-size: 12px;
-      letter-spacing: 1.5px;
-      fill: #2f3a12;
-    }
-    #now .lab-cable {
-      fill: none;
-      stroke: var(--ink);
-      stroke-width: 4;
-      stroke-linecap: round;
-    }
-    #now .lab-ink-fill {
-      fill: var(--ink);
-    }
-    #now .lab-ink-line {
-      fill: none;
-      stroke: var(--ink);
-      stroke-width: 2.4;
-      stroke-linecap: round;
-    }
-    #now .lab-ink-line.is-thick {
-      stroke-width: 3.2;
-    }
-    #now .lab-puff,
-    #now .lab-puff-core {
-      fill: #fbf1df;
-    }
-    #now .lab-puff {
-      stroke: var(--ink);
-      stroke-width: 2;
-    }
-    #now .lab-blush {
-      fill: #ffc4c4;
-    }
-    #now .lab-folder {
-      fill: #b19aea;
-      stroke: var(--ink);
-      stroke-width: 2.4;
-      stroke-linejoin: round;
-    }
-    #now .lab-folder-front {
-      fill: #d9cdf5;
-      stroke: var(--ink);
-      stroke-width: 2.4;
-    }
-    #now .lab-tg {
-      fill: #bfe0ff;
-      stroke: var(--ink);
-      stroke-width: 2.4;
-    }
-    #now .lab-plane {
-      fill: #fffdf5;
-      stroke: var(--ink);
-      stroke-width: 2.2;
-      stroke-linejoin: round;
-    }
-    #now .lab-cf {
-      fill: #ffb35c;
-      stroke: var(--ink);
-      stroke-width: 2.4;
-      stroke-linejoin: round;
-    }
-    #now .lab-phone {
-      fill: #2b2c27;
-    }
-    #now .lab-phone-screen {
-      fill: #d9eeff;
-    }
-    #now .lab-phone-cam {
-      fill: #5b5c55;
-    }
-    #now .lab-photo-icon {
-      fill: #8fd18a;
-      stroke: var(--ink);
-      stroke-width: 1.6;
-      stroke-linejoin: round;
-    }
-    #now .lab-sun {
-      fill: #ffd86b;
-    }
-    #now .lab-vent {
-      stroke: var(--ink);
-      stroke-width: 2;
-      stroke-linecap: round;
-    }
-    #now .lab-zero {
-      font-size: 26px;
-      font-weight: 800;
-      fill: #d9402f;
-    }
-    #now .lab-tape {
-      fill: rgba(177, 154, 234, 0.85);
-    }
-    #now .lab-lobster path {
-      fill: #e5352b;
-      stroke: var(--ink);
-      stroke-width: 2;
-      stroke-linejoin: round;
-    }
-    #now .lab-lobster .lab-lobster-line {
-      fill: none;
-      stroke: #b3241c;
-      stroke-width: 2.2;
-      stroke-linecap: round;
-    }
-    #now .lab-led {
-      fill: #3ddc97;
-      stroke: var(--ink);
-      stroke-width: 1.6;
-    }
-    #now .lab-led.is-dim {
-      fill: #8f9187;
-    }
-    #now .lab-led.is-beat {
-      animation: labBeat 2.4s ease-in-out infinite;
-      transform-box: fill-box;
-      transform-origin: center;
-    }
-    @keyframes labBeat {
-      0%,
-      70%,
-      100% {
-        transform: scale(1);
-      }
-      80% {
-        transform: scale(1.5);
-      }
-    }
 
-    /* Links: quiet dashed lines, solid with a moving packet while a job runs */
-    #now .lab-link path {
-      fill: none;
-      stroke: var(--ink);
-      stroke-width: 2.4;
-      stroke-dasharray: 3 7;
-      stroke-linecap: round;
-      opacity: 0.75;
-      animation: labLinkIn 0.3s ease both;
-    }
-    @keyframes labLinkIn {
-      from {
-        opacity: 0;
-      }
-    }
-    #now .lab-link.is-on path {
-      opacity: 1;
-      stroke-width: 3;
-      stroke-dasharray: 10 6;
-      animation: labFlow 0.9s linear infinite;
-    }
-    #now .lab-chip-text {
-      letter-spacing: -0.2px;
-    }
-    #now .lab-packet {
-      fill: #fffdf5;
-      stroke: var(--ink);
-      stroke-width: 2.4;
-    }
-    @keyframes labFlow {
-      to {
-        stroke-dashoffset: -32;
-      }
-    }
-
-    /* Devices are buttons */
-    #now .lab-node {
-      cursor: pointer;
-      outline: none;
-    }
-    #now .lab-node > * {
-      transition: transform 0.18s ease;
-    }
-    #now .lab-node:hover .lab-shadow,
-    #now .lab-node:focus-visible .lab-shadow {
-      fill: #6541b4;
-    }
-    #now .lab-node.is-on .lab-shadow {
-      fill: #6541b4;
-    }
-    #now .lab-node.is-selected .lab-card,
-    #now .lab-node.is-selected .lab-imac {
-      stroke-width: 4;
-    }
-    #now .lab-node.is-selected .lab-shadow {
-      fill: #d9402f;
-    }
-
-    /* iMac terminal */
+    /* iMac terminal (units are artwork pixels) */
     #now .lab-term text {
       fill: #f5f2e9;
     }
-    #now .lab-term .lab-term-dim {
-      font-size: 11px;
-      fill: #8f9187;
-    }
     #now .lab-term .lab-term-clock {
-      font-size: 18px;
+      font-size: 27px;
       font-weight: 700;
       fill: var(--green);
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
     }
     #now .lab-term .lab-term-line {
-      font-size: 13.5px;
+      font-size: 19px;
+      fill: #d9dad2;
     }
     #now .lab-term .lab-term-count {
-      font-size: 36px;
+      font-size: 66px;
       font-weight: 800;
+      letter-spacing: 1px;
     }
     #now .lab-term .lab-term-count.is-busy {
       fill: var(--green);
@@ -1279,12 +1032,112 @@ export const NotebookStyle = () => (
       animation: labCursor 1s steps(1) infinite;
     }
     #now .lab-term .lab-term-foot {
-      font-size: 12px;
-      fill: #b9bab2;
+      font-size: 20px;
+      fill: #a9aaa2;
     }
     @keyframes labCursor {
       50% {
         opacity: 0;
+      }
+    }
+
+    /* NAS LEDs: a soft glow, a quick double beat while the heartbeat goes out */
+    #now .lab-led-ring {
+      fill: none;
+      stroke: #3ddc97;
+      stroke-width: 4;
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: labLedGlow 3.2s ease-in-out infinite;
+    }
+    #now .lab-led-ring.is-beating {
+      animation: labLedBeat 1s ease-out infinite;
+    }
+    @keyframes labLedGlow {
+      0%,
+      100% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      50% {
+        opacity: 0.7;
+        transform: scale(1.25);
+      }
+    }
+    @keyframes labLedBeat {
+      0% {
+        opacity: 1;
+        transform: scale(0.8);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(2.4);
+      }
+    }
+
+    /* Muse speech bubble */
+    #now .lab-muse-bubble {
+      position: absolute;
+      left: 31%;
+      top: 4.5%;
+      z-index: 3;
+      max-width: 52%;
+      padding: 0.35em 0.8em;
+      background: #fffdf5;
+      border: 2px solid var(--ink);
+      border-radius: 12px 12px 12px 2px;
+      box-shadow: 2px 2px var(--ink);
+      font-size: clamp(9px, 2.3cqi, 12px);
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transform: rotate(-3deg);
+      pointer-events: none;
+    }
+    #now .lab-muse-bubble.is-busy {
+      background: var(--ink);
+      color: var(--green);
+    }
+
+    /* Devices are clickable without drawing over the art */
+    #now .lab-hotspot {
+      position: absolute;
+      z-index: 2;
+      padding: 0;
+      background: transparent;
+      border: 2px dashed transparent;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    #now .lab-hotspot:hover,
+    #now .lab-hotspot:focus-visible {
+      border-color: rgba(32, 33, 30, 0.55);
+      background: rgba(255, 253, 245, 0.18);
+      outline: none;
+    }
+    #now .lab-hotspot.is-selected {
+      border: 2.5px solid var(--ink);
+      background: rgba(255, 253, 245, 0.22);
+    }
+    /* a small "working now" dot on devices whose job is running */
+    #now .lab-hotspot.is-on::after {
+      content: '';
+      position: absolute;
+      top: 6%;
+      right: 8%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #6541b4;
+      border: 2px solid var(--ink);
+      animation: labBusyDot 1.2s ease-in-out infinite;
+    }
+    @keyframes labBusyDot {
+      50% {
+        transform: scale(1.35);
       }
     }
 
@@ -1594,9 +1447,9 @@ export const NotebookStyle = () => (
       }
       #now .lab-note-card.is-open,
       #now .lab-term .lab-term-cursor,
-      #now .lab-led.is-beat,
-      #now .lab-ruler-group.is-busy rect,
-      #now .lab-link.is-on path {
+      #now .lab-led-ring,
+      #now .lab-hotspot.is-on::after,
+      #now .lab-ruler-group.is-busy rect {
         animation: none;
       }
     }

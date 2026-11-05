@@ -4,13 +4,15 @@ import { useLang } from './LangContext'
 import { STICKER_ICONS } from './StackStickers'
 
 /*
- * Home Lab scene: a hand-drawn SVG map of who does what at home, driven by the
- * real Tokyo-time schedule (NAS cron jobs, Muse runs, the 10-minute monitor
- * heartbeat and the hourly photo relay). The iMac screen is a live terminal,
- * links light up while their job runs, and every device opens a short note.
+ * Home Lab panel: the hand-drawn device set with a thin live layer on top,
+ * driven by the real Tokyo-time schedule (NAS cron jobs, Muse runs, the
+ * 10-minute monitor heartbeat and the hourly photo relay). The iMac screen
+ * shows a ticking countdown, the NAS LEDs beat, Muse says what it is up to,
+ * and every device opens a short note.
  */
-const VIEW_W = 600
-const VIEW_H = 700
+const ART = '/themes/field-notes/assets/home-lab-set.webp'
+const VIEW_W = 1156
+const VIEW_H = 1360
 
 const NOTE_HOMELAB = '/article/dev5'
 const NOTE_NAS = '/article/dev3'
@@ -59,9 +61,10 @@ const COPY = {
     now: 'NOW',
     next: 'NEXT',
     today: 'TODAY · JST',
+    museIdle: time => `☕ 下一班 ${time}`,
     readNote: '读全文 ↗',
     close: '收起',
-    hint: '← 点图里的任何设备，这里会翻出它的笔记。线条亮起来，就是那条链路正在干活。',
+    hint: '← 点图里的任何设备，这里会翻出它的笔记。带紫点的，就是此刻正在干活的。',
     stackLabel: '常驻工具'
   },
   en: {
@@ -107,9 +110,10 @@ const COPY = {
     now: 'NOW',
     next: 'NEXT',
     today: 'TODAY · JST',
+    museIdle: time => `☕ next ${time}`,
     readNote: 'Read the note ↗',
     close: 'Close',
-    hint: '← Tap any device in the drawing and its note opens here. A line lights up while that link is working.',
+    hint: '← Tap any device in the drawing and its note opens here. A purple dot means it is working right now.',
     stackLabel: 'Always running'
   },
   ja: {
@@ -155,9 +159,10 @@ const COPY = {
     now: 'NOW',
     next: 'NEXT',
     today: 'TODAY · JST',
+    museIdle: time => `☕ 次は ${time}`,
     readNote: '記事を読む ↗',
     close: '閉じる',
-    hint: '← 絵の中の機器を押すと、ここにノートが開きます。線が光っているのは、その経路が動いている時間です。',
+    hint: '← 絵の中の機器を押すと、ここにノートが開きます。紫の点は、いま動いている印です。',
     stackLabel: '常駐ツール'
   }
 }
@@ -274,126 +279,52 @@ const useTokyoClock = () => {
   return secs
 }
 
-/* ---------------- drawing helpers ---------------- */
+/* ---------------- live layer over the artwork ---------------- */
 
-const Card = ({ x, y, w, h, r = 10, fill, className = '' }) => (
-  <>
-    <rect className='lab-shadow' x={x + 5} y={y + 5} width={w} height={h} rx={r} />
-    <rect
-      className={`lab-card ${className}`}
-      x={x}
-      y={y}
-      width={w}
-      height={h}
-      rx={r}
-      style={fill ? { fill } : undefined}
-    />
-  </>
-)
+// Device hit areas in artwork pixels (x, y, w, h); later entries sit on top
+const HOTSPOTS = [
+  { id: 'muse', box: [130, 110, 260, 230] },
+  { id: 'drive', box: [450, 120, 170, 150] },
+  { id: 'telegram', box: [660, 100, 190, 160] },
+  { id: 'cloudflare', box: [880, 160, 220, 140] },
+  { id: 'imac', box: [90, 340, 620, 530] },
+  { id: 'nas', box: [710, 640, 400, 300] },
+  { id: 'pixel', box: [90, 980, 180, 270] },
+  { id: 'linux', box: [296, 1070, 254, 150] },
+  { id: 'router', box: [600, 1000, 270, 240] },
+  { id: 'claw', box: [910, 1020, 210, 260] }
+]
+const pct = (v, total) => `${((v / total) * 100).toFixed(2)}%`
+const boxStyle = ([x, y, w, h]) => ({
+  left: pct(x, VIEW_W),
+  top: pct(y, VIEW_H),
+  width: pct(w, VIEW_W),
+  height: pct(h, VIEW_H)
+})
 
-const Node = ({ id, label, active, selected, onSelect, transform, children }) => (
-  <g
-    className={`lab-node is-${id}${active ? ' is-on' : ''}${selected ? ' is-selected' : ''}`}
-    transform={transform}
-    role='button'
-    tabIndex={0}
-    aria-label={label}
-    aria-pressed={selected}
-    onClick={() => onSelect && onSelect(selected ? null : id)}
-    onKeyDown={e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onSelect && onSelect(selected ? null : id)
-      }
-    }}>
-    {children}
-  </g>
-)
+// NAS front LEDs; the first one carries the 10-minute heartbeat
+const NAS_LEDS = [
+  [886, 793],
+  [887, 824],
+  [887, 852],
+  [887, 879]
+]
 
-const CardLabel = ({ x, y, lines }) => (
-  <>
-    <text className='lab-label' x={x} y={y} textAnchor='middle'>
-      {lines[0]}
-    </text>
-    <text className='lab-sub' x={x} y={y + 18} textAnchor='middle'>
-      {lines[1]}
-    </text>
-  </>
-)
+const MUSE_RUNS = RUNS.filter(r => r.who === 'Muse')
+const nextMuseRun = secs => MUSE_RUNS.find(r => r.start > secs) || MUSE_RUNS[0]
 
-const LINKS = {
-  tunnel: 'M532 212C532 186 519 168 519 138',
-  trend: 'M452 212C452 178 382 168 373 138',
-  drive: 'M394 212C380 176 240 170 227 138',
-  tailscale: 'M81 138C110 260 300 210 380 300',
-  photo: 'M382 452C360 520 150 472 98 536',
-  router: 'M462 452C462 512 398 520 388 566',
-  alert: 'M456 80L438 80'
-}
-
-// Which devices each link belongs to: picking a device reveals its links
-const LINK_NODES = {
-  tunnel: ['nas', 'cloudflare'],
-  trend: ['nas', 'telegram'],
-  drive: ['nas', 'drive'],
-  tailscale: ['muse', 'nas'],
-  photo: ['nas', 'pixel'],
-  router: ['nas', 'router'],
-  alert: ['cloudflare', 'telegram']
-}
-
-const LinkPath = ({ id, on }) => (
-  <g className={`lab-link is-${id}${on ? ' is-on' : ' is-shown'}`}>
-    <path d={LINKS[id]} />
-    {on && (
-      <circle className='lab-packet' r='5.5'>
-        <animateMotion dur='1.8s' repeatCount='indefinite' path={LINKS[id]} />
-      </circle>
-    )}
-  </g>
-)
-
-const Fluffy = ({ cx, cy, r = 22 }) => {
-  const puffs = Array.from({ length: 12 }, (_, i) => {
-    const a = (i / 12) * Math.PI * 2
-    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]
-  })
-  return (
-    <g className='lab-fluffy'>
-      {puffs.map(([px, py], i) => (
-        <circle key={i} cx={px} cy={py} r='7.5' className='lab-puff' />
-      ))}
-      <circle cx={cx} cy={cy} r={r + 1} className='lab-puff-core' />
-      <ellipse cx={cx - 11} cy={cy + 6} rx='4.5' ry='3' className='lab-blush' />
-      <ellipse cx={cx + 11} cy={cy + 6} rx='4.5' ry='3' className='lab-blush' />
-      <circle cx={cx - 8} cy={cy - 2} r='3.4' className='lab-ink-fill' />
-      <circle cx={cx + 8} cy={cy - 2} r='3.4' className='lab-ink-fill' />
-      <path d={`M${cx - 5} ${cy + 6}q5 5 10 0`} className='lab-ink-line' />
-    </g>
-  )
-}
-
-const CONTAINERS = ['AdGuard', 'cloudflared', 'Syncthing', 'TrendRadar', 'RSSHub', 'Glance']
-
+/* Text drawn onto the iMac screen, tilted to match the drawn monitor */
 const ScreenTerminal = ({ state, secs, copy }) => {
   const job = state ? state.busy || state.next : null
   return (
-    <g className='lab-term'>
-      <text className='lab-term-dim' x='50' y='236'>
-        ● ● ●
-      </text>
-      <text className='lab-term-dim' x='296' y='236' textAnchor='end'>
-        muse@homelab
-      </text>
-      <text className='lab-term-clock' x='50' y='263'>
+    <g className='lab-term' transform='rotate(-4 412 530)'>
+      <text className='lab-term-clock' x='440' y='462'>
         TOKYO {secs === null ? '--:--:--' : formatClock(secs)}
       </text>
-      <text className='lab-term-line' x='50' y='290'>
-        {job
-          ? `${state.busy ? copy.now : copy.next} ${job.at} ${copy.events[job.id]} · ${job.who}`
-          : ''}
+      <text className='lab-term-line' x='440' y='500'>
+        {job ? `${state.busy ? copy.now : copy.next} ${job.at} ${copy.events[job.id]}` : ''}
       </text>
-      <text className={`lab-term-count${state?.busy ? ' is-busy' : ''}`} x='50' y='333'>
+      <text className={`lab-term-count${state?.busy ? ' is-busy' : ''}`} x='176' y='606'>
         {state
           ? state.busy
             ? `T+${formatClock(state.elapsed)}`
@@ -401,7 +332,7 @@ const ScreenTerminal = ({ state, secs, copy }) => {
           : 'T-00:00:00'}
         <tspan className='lab-term-cursor'>▌</tspan>
       </text>
-      <text className='lab-term-foot' x='50' y='358'>
+      <text className='lab-term-foot' x='178' y='644'>
         {state
           ? `♥ ${copy.beat} ${formatShort(state.beatLeft)}   ⇅ ${copy.photos} ${formatShort(state.photoLeft)}`
           : ''}
@@ -506,167 +437,59 @@ export const LabFigure = ({ activeId = null, onSelect }) => {
   const copy = getLabCopy(lang)
   const secs = useTokyoClock()
   const state = secs === null ? null : labSchedule(secs)
-  const on = id => Boolean(state?.nodes.has(id))
-  const linkOn = id => Boolean(state?.links.has(id))
-  const node = id => ({
-    id,
-    label: copy.nodes[id].join(' · '),
-    active: on(id),
-    selected: activeId === id,
-    onSelect
-  })
+  const museBusy = state?.busy && state.busy.who === 'Muse' ? state.busy : null
+  const museNext = secs === null ? null : nextMuseRun(secs)
+  const beating = Boolean(state?.links.has('tunnel'))
 
   return (
     <div className='lab-stage'>
       <div className='lab-figure'>
-        <svg className='lab-scene' viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} role='group' aria-label='Home lab'>
-          {/* Links stay hidden until their job runs or one of their devices is picked */}
-          {Object.keys(LINKS)
-            .filter(id => linkOn(id) || LINK_NODES[id].includes(activeId))
-            .map(id => (
-              <LinkPath key={id} id={id} on={linkOn(id)} />
-            ))}
-
-          {/* cloud row */}
-          <Node {...node('muse')} transform='rotate(-2 81 80)'>
-            <Card x={18} y={28} w={126} h={104} />
-            <Fluffy cx={81} cy={62} />
-            <CardLabel x={81} y={110} lines={copy.nodes.muse} />
-          </Node>
-          <Node {...node('drive')} transform='rotate(1.5 227 80)'>
-            <Card x={164} y={28} w={126} h={104} />
-            <path className='lab-folder' d='M202 46h18l6 7h26v28h-50z' />
-            <path className='lab-folder-front' d='M202 58h50v23h-50z' />
-            <CardLabel x={227} y={110} lines={copy.nodes.drive} />
-          </Node>
-          <Node {...node('telegram')} transform='rotate(-1 373 80)'>
-            <Card x={310} y={28} w={126} h={104} />
-            <circle className='lab-tg' cx='373' cy='62' r='22' />
-            <path className='lab-plane' d='M361 62l26-11-6 25-8-7-5 6v-8z' />
-            <CardLabel x={373} y={110} lines={copy.nodes.telegram} />
-          </Node>
-          <Node {...node('cloudflare')} transform='rotate(2 519 80)'>
-            <Card x={456} y={28} w={126} h={104} />
-            <path
-              className='lab-cf'
-              d='M494 76c-12 0-14-15-3-18 0-13 18-18 26-8 6-12 28-10 30 6 13-1 15 19 1 20z'
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className='lab-art-img'
+          src={ART}
+          alt=''
+          width={VIEW_W}
+          height={VIEW_H}
+          loading='lazy'
+          decoding='async'
+        />
+        <svg
+          className='lab-overlay'
+          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+          aria-hidden='true'
+          preserveAspectRatio='none'>
+          <ScreenTerminal state={state} secs={secs} copy={copy} />
+          {NAS_LEDS.map(([cx, cy], i) => (
+            <circle
+              key={cy}
+              className={`lab-led-ring${i === 0 ? ' is-heartbeat' : ''}${i === 0 && beating ? ' is-beating' : ''}`}
+              cx={cx}
+              cy={cy}
+              r='13'
+              style={{ animationDelay: `${i * 0.35}s` }}
             />
-            <CardLabel x={519} y={110} lines={copy.nodes.cloudflare} />
-          </Node>
-
-          {/* iMac with the live terminal */}
-          <Node {...node('imac')}>
-            <path className='lab-cable' d='M322 318C352 318 342 430 372 430' />
-            <rect className='lab-shadow' x='27' y='205' width='300' height='200' rx='16' />
-            <rect className='lab-imac' x='22' y='200' width='300' height='200' rx='16' />
-            <rect className='lab-screen' x='36' y='214' width='272' height='154' rx='6' />
-            <ScreenTerminal state={state} secs={secs} copy={copy} />
-            <path className='lab-imac' d='M152 400h40l8 46h-56z' />
-            <rect className='lab-imac' x='112' y='444' width='120' height='12' rx='6' />
-          </Node>
-
-          {/* NAS */}
-          <Node {...node('nas')}>
-            <rect className='lab-shadow' x='377' y='237' width='180' height='220' rx='10' />
-            <path className='lab-nas-side' d='M552 232l20-18v220l-20 18z' />
-            <path className='lab-nas-top' d='M372 232l20-18h180l-20 18z' />
-            <rect className='lab-card' x='372' y='232' width='180' height='220' rx='10' />
-            <rect className='lab-bay' x='386' y='246' width='26' height='60' rx='4' />
-            <rect className='lab-bay' x='418' y='246' width='26' height='60' rx='4' />
-            {[256, 274, 292].map((cy, i) => (
-              <circle key={cy} className={`lab-led${i === 0 ? ' is-beat' : ''}`} cx='462' cy={cy} r='5.5' />
-            ))}
-            <text className='lab-label' x='540' y='264' textAnchor='end'>
-              {copy.nodes.nas[0]}
-            </text>
-            <text className='lab-sub' x='540' y='284' textAnchor='end'>
-              24h
-            </text>
-            {CONTAINERS.map((name, i) => {
-              const cx = i % 2 === 0 ? 384 : 466
-              const cy = 322 + Math.floor(i / 2) * 40
-              return (
-                <g key={name}>
-                  <rect className={`lab-chip${i % 3 === 1 ? ' is-alt' : ''}`} x={cx} y={cy} width='78' height='30' rx='4' />
-                  <text className='lab-chip-text' x={cx + 39} y={cy + 20} textAnchor='middle'>
-                    {name}
-                  </text>
-                </g>
-              )
-            })}
-          </Node>
-
-          {/* bottom row */}
-          <Node {...node('pixel')}>
-            <rect className='lab-shadow' x='35' y='541' width='64' height='118' rx='12' />
-            <rect className='lab-phone' x='30' y='536' width='64' height='118' rx='12' />
-            <rect className='lab-phone-screen' x='37' y='550' width='50' height='92' rx='4' />
-            <rect className='lab-phone-cam' x='46' y='541' width='32' height='5' rx='2.5' />
-            <path className='lab-photo-icon' d='M44 626l12-14 9 9 6-6 10 11z' />
-            <circle className='lab-sun' cx='73' cy='592' r='5' />
-            <text className='lab-label' x='62' y='674' textAnchor='middle'>
-              {copy.nodes.pixel[0]}
-            </text>
-            <text className='lab-sub' x='62' y='692' textAnchor='middle'>
-              {copy.nodes.pixel[1]}
-            </text>
-          </Node>
-
-          <Node {...node('linux')} transform='rotate(-1.5 210 590)'>
-            <Card x={140} y={552} w={140} h={74} r={8} fill='#efe8ff' />
-            <path className='lab-vent' d='M152 568h20M152 576h20M152 584h20' />
-            <circle className='lab-led is-dim' cx='266' cy='566' r='4' />
-            <text className='lab-label' x='218' y='594' textAnchor='middle'>
-              {copy.nodes.linux[0]}
-            </text>
-            <text className='lab-sub' x='218' y='612' textAnchor='middle'>
-              muse · no sudo
-            </text>
-            <text className='lab-sub' x='210' y='650' textAnchor='middle'>
-              {copy.nodes.linux[1]}
-            </text>
-          </Node>
-
-          <Node {...node('router')}>
-            <path className='lab-ink-line is-thick' d='M336 572l-10-38M426 572l10-38' />
-            <circle className='lab-ink-fill' cx='326' cy='532' r='4' />
-            <circle className='lab-ink-fill' cx='436' cy='532' r='4' />
-            <Card x={316} y={570} w={130} h={52} r={8} />
-            {[336, 352, 368].map(cx => (
-              <circle key={cx} className='lab-led is-small' cx={cx} cy='596' r='3.5' />
-            ))}
-            <text className='lab-zero' x='420' y='606' textAnchor='middle'>
-              0
-            </text>
-            <text className='lab-label' x='381' y='650' textAnchor='middle'>
-              {copy.nodes.router[0]}
-            </text>
-            <text className='lab-sub' x='381' y='668' textAnchor='middle'>
-              {copy.nodes.router[1]}
-            </text>
-          </Node>
-
-          <Node {...node('claw')} transform='rotate(-6 526 590)'>
-            <Card x={470} y={528} w={112} h={120} r={6} fill='#fff3a8' />
-            <rect className='lab-tape' x='502' y='518' width='50' height='16' transform='rotate(4 527 526)' />
-            <g className='lab-lobster'>
-              <path className='lab-lobster-line' d='M521 562l-9-20M531 562l9-20M519 572l-10-4M533 572l10-4' />
-              <path className='lab-lobster-line' d='M518 566l-9-8M534 566l9-8' />
-              <path d='M509 547c-7-1-10 6-6 11 3 4 9 3 10-1l-5-3 6-1c0-3-2-6-5-6z' />
-              <path d='M543 547c7-1 10 6 6 11-3 4-9 3-10-1l5-3-6-1c0-3 2-6 5-6z' />
-              <path d='M526 558c7 0 10 7 10 15s-3 14-10 14-10-6-10-14 3-15 10-15z' />
-              <path d='M526 587l-8 11h16z' />
-              <circle className='lab-ink-fill' cx='522' cy='566' r='1.8' />
-              <circle className='lab-ink-fill' cx='530' cy='566' r='1.8' />
-            </g>
-            <text className='lab-label is-strike' x='526' y='622' textAnchor='middle'>
-              {copy.nodes.claw[0]}
-            </text>
-            <text className='lab-sub' x='526' y='640' textAnchor='middle'>
-              {copy.nodes.claw[1]}
-            </text>
-          </Node>
+          ))}
         </svg>
+
+        {secs !== null && (
+          <span className={`lab-muse-bubble mono${museBusy ? ' is-busy' : ''}`} aria-live='polite'>
+            {museBusy ? `✍ ${copy.events[museBusy.id]}…` : copy.museIdle(museNext.at)}
+          </span>
+        )}
+
+        {HOTSPOTS.map(h => (
+          <button
+            key={h.id}
+            type='button'
+            className={`lab-hotspot is-${h.id}${state?.nodes.has(h.id) ? ' is-on' : ''}${activeId === h.id ? ' is-selected' : ''}`}
+            style={boxStyle(h.box)}
+            aria-label={copy.nodes[h.id].join(' · ')}
+            aria-pressed={activeId === h.id}
+            aria-controls='lab-note-card'
+            onClick={() => onSelect && onSelect(activeId === h.id ? null : h.id)}
+          />
+        ))}
       </div>
       <DayRuler secs={secs} copy={copy} />
     </div>
