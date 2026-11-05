@@ -8,22 +8,40 @@ import { extractNoteLines } from '../data'
 const META_LINE = /^(地点|地點|器材|参数|參數|日期|拍摄|place|location|camera|gear|settings|exposure|date|場所|機材|カメラ|設定|日付)\s*[:：]/i
 const noteCache = new Map()
 
-/** Load a photo page's Notion body through Next's data route (same JSON the router uses). */
+/**
+ * Load a photo page's Notion body from the page's own server-rendered props.
+ * Reads the CDN-cached HTML instead of /_next/data, which this deployment
+ * does not serve; the post (with its blockMap) is embedded in __NEXT_DATA__.
+ * Posts are cached per page; lines per page + language.
+ */
+const postCache = new Map()
+const loadPost = async path => {
+  if (postCache.has(path)) return postCache.get(path)
+  const task = fetch(path, { headers: { Accept: 'text/html' } })
+    .then(res => (res.ok ? res.text() : ''))
+    .then(html => {
+      const match = html.match(
+        /<script id="__NEXT_DATA__" type="application\/json"[^>]*>([\s\S]*?)<\/script>/
+      )
+      return match ? JSON.parse(match[1])?.props?.pageProps?.post || null : null
+    })
+    .catch(() => null)
+  postCache.set(path, task)
+  const post = await task
+  if (!post) postCache.delete(path)
+  return post
+}
+
 const loadNoteLines = async (href, lang) => {
-  const buildId = typeof window !== 'undefined' ? window.__NEXT_DATA__?.buildId : null
-  if (!buildId || !href || /^https?:/i.test(href)) return []
+  if (!href || /^https?:/i.test(href)) return []
   const path = String(href).replace(/[?#].*$/, '').replace(/\/$/, '')
   const key = `${path}|${lang}`
   if (noteCache.has(key)) return noteCache.get(key)
-  const res = await fetch(`/_next/data/${buildId}${path}.json`)
-  if (!res.ok) return []
-  const data = await res.json()
-  const post = data?.pageProps?.post
+  const post = await loadPost(path)
   const lines = post?.blockMap ? extractNoteLines(post.blockMap, post.id, lang) : []
-  noteCache.set(key, lines)
+  if (post) noteCache.set(key, lines)
   return lines
 }
-
 
 export const Lightbox = ({
   viewerState,
