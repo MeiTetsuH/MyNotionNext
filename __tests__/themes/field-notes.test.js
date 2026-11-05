@@ -2,9 +2,11 @@ import {
   parseMultiLang,
   parsePhotoSummary,
   formatNotionDate,
-  getLocalizedBlogPosts
+  getLocalizedBlogPosts,
+  createTranslator,
+  parseNotionWorkProject
 } from '@/themes/field-notes/data'
-import { generateStructuredData } from '@/components/SEO'
+import { generateStructuredData, pickPrimaryLanguage } from '@/components/SEO'
 
 describe('Field Notes Theme Validations & Bug Fixes', () => {
   describe('parseMultiLang & parsePhotoSummary', () => {
@@ -86,6 +88,53 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
       const json = JSON.stringify(data).replace(/</g, '\\u003c')
       expect(json).not.toContain('</script>')
       expect(json).toContain('\\u003c/script>')
+    })
+  })
+
+  describe('SSR work project labels', () => {
+    const page = {
+      id: 'p1',
+      title: '01 / R2FileBox',
+      slug: 'https://github.com/example/r2filebox'
+    }
+
+    test('createTranslator resolves copy with zh fallback', () => {
+      expect(createTranslator('en')('viewCode')).toBe('View on GitHub')
+      expect(createTranslator('zh')('viewCode')).toBe('去 GitHub 看看')
+      expect(createTranslator('xx')('viewCode')).toBe('去 GitHub 看看')
+      expect(createTranslator('en')('no-such-key')).toBe('no-such-key')
+    })
+
+    test('parseNotionWorkProject with translator never leaks raw keys', () => {
+      for (const lang of ['zh', 'en', 'ja']) {
+        const parsed = parseNotionWorkProject(page, lang, createTranslator(lang))
+        expect(parsed.linkLabel).not.toBe('viewCode')
+        expect(parsed.linkLabel).toBe(createTranslator(lang)('viewCode'))
+        expect(parsed.screens[0]).not.toBe('screenPreview')
+      }
+    })
+  })
+
+  describe('pickPrimaryLanguage for crawler-facing meta', () => {
+    test('keeps the first language of inline multilingual text', () => {
+      expect(
+        pickPrimaryLanguage('Nas折腾合集 || Building Around a Home NAS || NAS を中心に')
+      ).toBe('Nas折腾合集')
+    })
+
+    test('reduces each segment of a structured photo summary', () => {
+      expect(
+        pickPrimaryLanguage(
+          '东京 · 新宿 || Tokyo · Shinjuku || 東京 · 新宿 @ 33mm f/2.8 @ 秋雨 || Autumn Rain || 秋の雨'
+        )
+      ).toBe('东京 · 新宿 · 33mm f/2.8 · 秋雨')
+    })
+
+    test('leaves plain text, emails and empty values untouched', () => {
+      expect(pickPrimaryLanguage('Plain title')).toBe('Plain title')
+      expect(pickPrimaryLanguage('mail me @ a@b.com')).toBe('mail me @ a@b.com')
+      expect(pickPrimaryLanguage(undefined)).toBeUndefined()
+      expect(pickPrimaryLanguage('')).toBe('')
     })
   })
 })

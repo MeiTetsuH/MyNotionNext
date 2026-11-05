@@ -404,6 +404,23 @@ const getIsoTime = value => {
  * @param {*} props
  * @param {*} router
  */
+/**
+ * Reduce inline multilingual text ("中文 || English || 日本語") to its first
+ * (primary) language for crawler-facing meta. Segments separated by " @ "
+ * (photo summaries: "place @ settings @ description") are reduced individually.
+ * Text without "||" is returned unchanged.
+ */
+export const pickPrimaryLanguage = value => {
+  if (value === null || value === undefined) return value
+  const raw = String(value)
+  if (!raw.includes('||')) return raw
+  return raw
+    .split(/\s+@\s+/)
+    .map(segment => segment.split('||')[0].trim())
+    .filter(Boolean)
+    .join(' · ')
+}
+
 const getSEOMeta = (props, router, locale) => {
   const { post, siteInfo, tag, category, page } = props
   const keyword = router?.query?.s
@@ -504,9 +521,9 @@ const getSEOMeta = (props, router, locale) => {
         : post?.category
       return {
         title: post
-          ? `${post?.title} | ${siteInfo?.title}`
+          ? `${pickPrimaryLanguage(post?.title)} | ${siteInfo?.title}`
           : `${siteInfo?.title} | loading`,
-        description: post?.summary,
+        description: pickPrimaryLanguage(post?.summary),
         type: post?.type,
         slug: post?.slug,
         image: post?.pageCoverThumbnail || defaultCover,

@@ -52,7 +52,7 @@ export const Hero = ({ onOpenHeroPhoto }) => {
               src='/themes/field-notes/assets/phone-waterfall-small.jpg'
               alt={t('heroWaterfallAlt')}
               loading='eager'
-              fetchPriority='high'
+              fetchpriority='high'
             />
             <span className='photo-label'>
               <span>{t('heroWaterfallPlace')}</span>

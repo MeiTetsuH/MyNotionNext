@@ -168,14 +168,15 @@ export async function getStaticProps(req) {
 
             // Pre-parse 3 language projections at SSR to avoid bloating __NEXT_DATA__
             try {
-              const { parseNotionWorkProject } = await import(
-                '@/themes/field-notes/data'
+              const { parseNotionWorkProject, createTranslator } =
+                await import('@/themes/field-notes/data')
+              // Pass a real translator so labels like `viewCode` resolve to copy, not raw keys
+              cloned.parsedByLang = Object.fromEntries(
+                ['zh', 'en', 'ja'].map(l => [
+                  l,
+                  parseNotionWorkProject(cloned, l, createTranslator(l))
+                ])
               )
-              cloned.parsedByLang = {
-                zh: parseNotionWorkProject(cloned, 'zh'),
-                en: parseNotionWorkProject(cloned, 'en'),
-                ja: parseNotionWorkProject(cloned, 'ja')
-              }
             } catch (e) {
               // Fallback silently if theme helper cannot be loaded
             }

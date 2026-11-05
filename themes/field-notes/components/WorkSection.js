@@ -221,7 +221,7 @@ export const WorkSection = ({ projectList = [], onOpenProjectScreen }) => {
             className='screenshot-button'
             id='open-screen'
             style={totalScreens <= 1 ? { marginTop: 63 } : undefined}
-            aria-label={`放大项目截图: ${screenAlt}`}
+            aria-label={`${String(t('enlarge')).replace(/\s*↗\s*$/, '')}: ${screenAlt}`}
             onClick={() =>
               onOpenProjectScreen &&
               onOpenProjectScreen(safeProjectIdx, activeScreenIndex)

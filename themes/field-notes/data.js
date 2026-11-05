@@ -13,6 +13,14 @@ export {
 }
 
 /**
+ * Build a translator with the same fallback chain as LangContext's `t`
+ * (current language → zh → key). Used where React context is unavailable, e.g. getStaticProps.
+ */
+export function createTranslator(lang = 'zh') {
+  return key => translations[lang]?.[key] ?? translations.zh?.[key] ?? key
+}
+
+/**
  * 解析 "中文 || English || 日本語" 格式的多语言文本
  */
 export function parseMultiLang(str, lang = 'zh') {
