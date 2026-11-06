@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useLang } from './LangContext'
 import { STICKER_ICONS } from './StackStickers'
@@ -313,18 +313,56 @@ const NAS_LEDS = [
 const MUSE_RUNS = RUNS.filter(r => r.who === 'Muse')
 const nextMuseRun = secs => MUSE_RUNS.find(r => r.start > secs) || MUSE_RUNS[0]
 
+// Run before paint on the client only (layout effects warn during SSR)
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
+
+/**
+ * Squeeze a line of SVG text to `max` user units when it would overflow the
+ * drawn screen (long Japanese task names, for example); short lines keep
+ * their natural spacing.
+ */
+const useFitText = (max, content) => {
+  const ref = useRef(null)
+  useIsoLayoutEffect(() => {
+    const el = ref.current
+    if (!el || typeof el.getComputedTextLength !== 'function') return
+    el.removeAttribute('textLength')
+    el.removeAttribute('lengthAdjust')
+    if (el.getComputedTextLength() > max) {
+      el.setAttribute('textLength', String(max))
+      el.setAttribute('lengthAdjust', 'spacingAndGlyphs')
+    }
+  }, [max, content])
+  return ref
+}
+
+// Usable width of the drawn screen, in artwork units, right of the code lines
+const SCREEN_RIGHT = 660
+const LINE_X = 440
+const COUNT_X = 176
+
 /* Text drawn onto the iMac screen, tilted to match the drawn monitor */
 const ScreenTerminal = ({ state, secs, copy }) => {
   const job = state ? state.busy || state.next : null
+  const lineText = job
+    ? `${state.busy ? copy.now : copy.next} ${job.at} ${copy.events[job.id]}`
+    : ''
+  const footText = state
+    ? `♥ ${copy.beat} ${formatShort(state.beatLeft)}   ⇅ ${copy.photos} ${formatShort(state.photoLeft)}`
+    : ''
+  const clockText = `TOKYO ${secs === null ? '--:--:--' : formatClock(secs)}`
+  const clockRef = useFitText(SCREEN_RIGHT - LINE_X, clockText)
+  const lineRef = useFitText(SCREEN_RIGHT - LINE_X, lineText)
+  const footRef = useFitText(SCREEN_RIGHT - COUNT_X, footText)
   return (
     <g className='lab-term' transform='rotate(-4 412 530)'>
-      <text className='lab-term-clock' x='440' y='462'>
-        TOKYO {secs === null ? '--:--:--' : formatClock(secs)}
+      <text ref={clockRef} className='lab-term-clock' x={LINE_X} y='462'>
+        {clockText}
       </text>
-      <text className='lab-term-line' x='440' y='500'>
-        {job ? `${state.busy ? copy.now : copy.next} ${job.at} ${copy.events[job.id]}` : ''}
+      <text ref={lineRef} className='lab-term-line' x={LINE_X} y='500'>
+        {lineText}
       </text>
-      <text className={`lab-term-count${state?.busy ? ' is-busy' : ''}`} x='176' y='606'>
+      <text className={`lab-term-count${state?.busy ? ' is-busy' : ''}`} x={COUNT_X} y='606'>
         {state
           ? state.busy
             ? `T+${formatClock(state.elapsed)}`
@@ -332,10 +370,8 @@ const ScreenTerminal = ({ state, secs, copy }) => {
           : 'T-00:00:00'}
         <tspan className='lab-term-cursor'>▌</tspan>
       </text>
-      <text className='lab-term-foot' x='178' y='644'>
-        {state
-          ? `♥ ${copy.beat} ${formatShort(state.beatLeft)}   ⇅ ${copy.photos} ${formatShort(state.photoLeft)}`
-          : ''}
+      <text ref={footRef} className='lab-term-foot' x={COUNT_X + 2} y='644'>
+        {footText}
       </text>
     </g>
   )
@@ -472,9 +508,12 @@ export const LabFigure = ({ activeId = null, onSelect }) => {
           ))}
         </svg>
 
+        {/* Short on purpose: it has to fit the gap above Muse; the screen spells out the task */}
         {secs !== null && (
-          <span className={`lab-muse-bubble mono${museBusy ? ' is-busy' : ''}`} aria-live='polite'>
-            {museBusy ? `✍ ${copy.events[museBusy.id]}…` : copy.museIdle(museNext.at)}
+          <span
+            className={`lab-muse-bubble mono${museBusy ? ' is-busy' : ''}`}
+            title={museBusy ? copy.events[museBusy.id] : copy.museIdle(museNext.at)}>
+            {museBusy ? `✍ ${museBusy.at}` : `☕ ${museNext.at}`}
           </span>
         )}
 

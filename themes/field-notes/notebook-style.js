@@ -1079,10 +1079,11 @@ export const NotebookStyle = () => (
     /* Muse speech bubble */
     #now .lab-muse-bubble {
       position: absolute;
-      left: 31%;
-      top: 4.5%;
+      /* empty band above Muse's head, clear of the washi tape */
+      left: 12.5%;
+      top: 0.4%;
       z-index: 3;
-      max-width: 52%;
+      max-width: 25%;
       padding: 0.35em 0.8em;
       background: #fffdf5;
       border: 2px solid var(--ink);
