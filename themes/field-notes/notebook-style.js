@@ -1430,6 +1430,28 @@ export const NotebookStyle = () => (
       background: rgba(177, 154, 234, 0.78);
     }
 
+    /* Two-column hero on narrow screens: keep the round sticker on the page */
+    @media (min-width: 721px) and (max-width: 1050px) {
+      #theme-field-notes .round-sticker {
+        right: 8px;
+      }
+    }
+
+    /* ---------- Hero collage, single-column widths ---------- */
+    /* The photos are sized in % of the collage but the collage had a fixed
+       height, so between ~560px and 720px the waterfall print spilled over
+       the ticker. Keep the proportions of the 390px layout and cap the width. */
+    @media (max-width: 720px) {
+      #theme-field-notes .collage {
+        height: auto;
+        aspect-ratio: 362 / 410;
+        width: 100%;
+        max-width: 520px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       #theme-field-notes .riso-cover > img,
       #theme-field-notes #notion-article .notion-row figure.notion-asset-wrapper-image {
