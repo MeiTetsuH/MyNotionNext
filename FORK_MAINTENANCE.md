@@ -1,29 +1,71 @@
 # Fork maintenance notes
 
-Recorded maintenance baseline: 2026-11-02. This is a snapshot, not a promise that upstream or advisory data is still current.
+Recorded maintenance baseline: 2026-11-06. This is a snapshot, not a promise that upstream or advisory data is still current.
 
 - Upstream: [https://github.com/notionnext-org/NotionNext](https://github.com/notionnext-org/NotionNext)
-- Integrated upstream commit: [`a2aa934b41c51ea95b74cbb67430e38392be01cd`](https://github.com/notionnext-org/NotionNext/commit/a2aa934b41c51ea95b74cbb67430e38392be01cd)
-- Verified maintenance code commit: `19db649683fb40f6c8eb1e3cfcd4acecd0f224a0`
-- Deployment branch: `main`
+- Integrated upstream commit: [`a2aa934b41c51ea95b74cbb67430e38392be01cd`](https://github.com/notionnext-org/NotionNext/commit/a2aa934b41c51ea95b74cbb67430e38392be01cd) (0 commits behind `upstream/main` at the baseline)
+- Fork remote: `git@github.com:MeiTetsuH/MyNotionNext.git` (`origin`); upstream remote: `upstream`
+- Production branch on Vercel: **`feat/field-notes-theme`** (project `my-notion-next`, framework preset Next.js). Every push to this branch deploys production at <https://me.mingzhe.uk>; commits whose message contains `[skip-version]` are not built (`vercel.json` `ignoreCommand`).
 
-This fork preserves a personal search-indexing policy while following the upstream application. Public blog pages and search/private routes intentionally have different indexing behavior.
+## Branch layout
 
-## Preserve these fork differences
+```
+upstream/main ──► main ──► feat/field-notes-theme  (production)
+                  │         └ field-notes theme work since 2026-11-02
+                  └ fork baseline: indexing policy, dependency patches,
+                    brand icons, first field-notes theme import
+```
+
+- `main` holds the fork baseline and is where upstream is merged first.
+- `feat/field-notes-theme` is `main` + theme work. It is merged forward from `main`, never rebased once pushed (it is the deployed branch).
+- `backup/feat-pre-rebase` and `upstream-main` are local safety refs from earlier syncs; do not push or delete them without checking they are fully merged.
+
+## Where the fork differs from upstream
+
+Almost all custom work lives in the theme. Outside the theme the deltas are small, deliberate patches; these are the files that can conflict on an upstream merge.
+
+### Theme (no upstream counterpart, never conflicts)
+
+| Paths | Content |
+| --- | --- |
+| `themes/field-notes/**` | The whole theme: `index.js` layouts, `style.js` (original styles), `notebook-style.js` (notebook redesign layer: Notion block styling, polaroid lightbox, contact sheet, home lab panel, hero fixes), `data.js` (Notion parsing, multilingual `"中 \|\| EN \|\| 日"` strings, photo summaries `"place @ settings @ description"`, `[ZH]/[EN]/[JA]` block toggles, `extractNoteLines`), `config.js`, `components/*` |
+| `themes/fieldnotes`, `public/themes/fieldnotes`, `public/fieldnotes` | Symlinks to the `field-notes` folders (legacy aliases); keep them as symlinks |
+| `public/themes/field-notes/assets/**` | Theme images; `home-lab-set.webp` is the current home lab artwork (transparent) |
+| `__tests__/themes/field-notes.test.js` | Theme regression tests (translator, project parsing, SEO language pick, Tokyo schedule, note extraction) |
+
+### Core files patched for the theme
+
+| Path | Fork change | When merging upstream |
+| --- | --- | --- |
+| `pages/index.js` | For `field-notes`: return all published posts (no pagination) and prefetch Notion blocks of `做的东西` / project pages into `workProjectPages`, with `parsedByLang` built via `createTranslator` so SSR labels are not raw keys | Keep both blocks; re-apply on top of upstream's `getStaticProps` if it was restructured |
+| `components/SEO.js` | `pickPrimaryLanguage()` so multilingual titles/descriptions emit only the first language in meta tags; brand favicon / apple-touch-icon links | Keep the helper and its use in the post branch of `getSEOMeta` |
+| `pages/_document.js` | Force light mode when `THEME === 'field-notes'`; `initLangScript` sets `window.__INIT_LANG__` from `h-mz-language` (localStorage/cookie), `?lang=`, or the browser to avoid a language flash | Keep both scripts; they are no-ops for other themes |
+| `components/ExternalPlugins.js` | Timers cleaned up on unmount, `GLOBAL_JS` injected as a script element instead of `eval`, 51la/Chatbase via `next/script` | Re-apply only if upstream still uses `eval` / bare script tags |
+| `pages/_app.js` | `<SEO>` placement adjusted | Trivial; take upstream and re-check SEO renders once |
+
+### Core files patched for search indexing (fork baseline)
 
 | Paths | Intent |
 | --- | --- |
-| `lib/search-index-policy.js, __tests__/lib/search-index-policy.test.js` | Keep the shared indexing decision and regression tests. |
-| `lib/utils/sitemap.xml.js, pages/sitemap.xml.js, __tests__/lib/sitemap.xml.test.js` | Keep the sitemap exclusions consistent with the indexing policy. |
-| `components/SEO.js, middleware.ts, pages/_app.js` | Keep canonical/noindex/header behavior consistent; do not let an upstream template silently restore indexing of excluded pages. |
-| `vercel.json` | Keep the existing deployment settings and version-bump ignore rule. Do not add skip markers merely to bypass release checks. |
-| `.eslintrc.js` | Avoid registering the react-hooks plugin twice; the release lint correction is intentional. |
+| `lib/search-index-policy.js`, `__tests__/lib/search-index-policy.test.js` | Shared indexing decision and regression tests |
+| `lib/utils/sitemap.xml.js`, `pages/sitemap.xml.js`, `__tests__/lib/sitemap.xml.test.js` | Sitemap exclusions consistent with the policy |
+| `middleware.ts` | Wraps upstream's middleware: 404 + `noindex` for malformed template URLs, `X-Robots-Tag: noindex, follow` on service routes; matcher adds `/https(.*)` | Keep the wrapper; take upstream's inner `noAuthMiddleware` / Clerk logic |
+| `vercel.json` | Deployment settings and the `[skip-version]` ignore rule | Keep |
+| `.eslintrc.js` | `react-hooks` plugin not registered twice | Keep |
+| `tsconfig.json`, `next-env.d.ts` | `target: ES2017`, Next 15 generated reference | Take upstream unless the build breaks |
+| `.gitignore` | `.env*` ignored | Keep |
+| `public/favicon.*`, `public/icon-*.png`, `public/apple-touch-icon*.png` | Brand "H" icons replacing the Notion defaults | Keep ours |
 
-The upstream [deployment guide](DEPLOYMENT.md) and [maintainer runbook](docs/developer/MAINTAINER_RUNBOOK.en.md) describe broader platforms. This file records the fork-specific delta; platform examples do not override the current manifest/lockfile.
+## Content and platform settings (outside Git)
+
+- **Notion config table** (`配置中心` page in the blog database): enabled rows are `LINK`, `THEME = field-notes`, `KEYWORDS`, `AUTHOR`, `BIO`, `LANG`, `SINCE`, `BLOG_FAVICON`, `CONTACT_EMAIL`, `CUSTOM_MENU`, `WIDGET_PET`, `POST_URL_PREFIX_MAPPING_CATEGORY` (inactive while `POST_URL_PREFIX` is unchecked), `GREETING_WORDS`. The theme also reads optional `FIELD_NOTES_STATUS` / `FIELD_NOTES_SCRIBBLE` (`"中 || EN || 日"`) for hero copy.
+- **Notion database**: title `Mingzhe · Field Notes`, description `认真折腾，顺便记录。` (used for site title/description and share cards).
+- **Vercel**: production branch `feat/field-notes-theme`; `NEXT_PUBLIC_CHATBASE_ID` was removed on 2026-11-06 (the bot no longer existed and its embed threw errors). `NEXT_PUBLIC_*` values are baked in at build time, so env changes need a redeploy.
+- **Next.js i18n is on** (upstream `next.config.js`, `defaultLocale: BLOG.LANG`). Data routes therefore include the locale: `/_next/data/<buildId>/zh-CN/article/<slug>.json`. A URL without `/zh-CN/` returns 404 by design; the router adds it automatically. The theme's print-back loader reads the page's own `__NEXT_DATA__` instead and does not depend on this.
 
 ## Dependency and runtime baseline
 
-Yarn 1.22.22 with `yarn.lock`; `.nvmrc` remains the upstream Node 22 line and `engines.node` is `>=22 <25`. Use a current security-patched runtime within that range. Maintenance was also tested with Node 24.22.1. Next is 15.5.28; this fork was not migrated to Next 16.
+Yarn 1.22.22 with `yarn.lock`; `.nvmrc` remains the upstream Node 22 line and `engines.node` is `>=22 <25`. Vercel builds with Node 24.x. Next is 15.5.28; this fork was not migrated to Next 16.
 
 The targeted `**/@vercel/cli-config/zod` resolution removes the old Zod 4.1.11 runtime chain. The unrelated chromium-bidi development chain only declares Zod 3 compatibility and was not forced to Zod 4. Keep documentation builds and the application build as separate checks.
 
@@ -34,23 +76,23 @@ The manifest and committed lockfile are authoritative for exact dependency resol
 | Scoped selection | Current declaration | Reason |
 | --- | --- | --- |
 | `axios` | `>=0.21.1` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `esbuild` | `^0.25.0` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `flatted` | `^3.4.2` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `form-data` | `^4.0.6` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `js-cookie` | `^3.0.7` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `lodash` | `^4.18.1` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `picomatch` | `^2.3.2` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `qs` | `^6.15.2` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `tmp` | `^0.2.6` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `uuid` | `^11.1.1` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `postcss` | `^8.5.29` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `nanoid` | `^3.3.18` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `source-map-js` | `^1.2.2` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
-| `sharp` | `^0.35.5` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
+| `esbuild` | `^0.25.0` | Same as above. |
+| `flatted` | `^3.4.2` | Same as above. |
+| `form-data` | `^4.0.6` | Same as above. |
+| `js-cookie` | `^3.0.7` | Same as above. |
+| `lodash` | `^4.18.1` | Same as above. |
+| `picomatch` | `^2.3.2` | Same as above. |
+| `qs` | `^6.15.2` | Same as above. |
+| `tmp` | `^0.2.6` | Same as above. |
+| `uuid` | `^11.1.1` | Same as above. |
+| `postcss` | `^8.5.29` | Same as above. |
+| `nanoid` | `^3.3.18` | Same as above. |
+| `source-map-js` | `^1.2.2` | Same as above. |
+| `sharp` | `^0.35.5` | Same as above. |
 | `webpack-bundle-analyzer/ws` | `^7.5.11` | Patch the WebSocket dependency while retaining its compatible major. |
 | `@clerk/clerk-react` | `^5.61.6` | Keep the authorization-related upstream security correction. |
 | `**/@typescript-eslint/typescript-estree/minimatch` | `^9.0.7` | Patch the parser tooling dependency within its supported major. |
-| `postcss-selector-parser` | `^7.1.6` | Retain the reviewed security/compatibility resolution for this dependency family; do not replace all parent majors with a single version. |
+| `postcss-selector-parser` | `^7.1.6` | Retain the reviewed security/compatibility resolution. |
 | `**/get-uri/basic-ftp` | `^6.2.1` | Patch the proxy/browser-tooling FTP chain. |
 | `**/vitepress/vite` | `^6.4.4` | Patch the documentation build tool without moving it to an unrelated major. |
 | `**/@vercel/cli-config/zod` | `4.6.7` | Patch the production Vercel configuration chain to Zod 4.6.7. |
@@ -59,12 +101,29 @@ For every entry above, remove or narrow it only after the parent dependency natu
 
 ## Known limitations at this baseline
 
-At the recorded maintenance baseline, the production audit returned zero findings. The full audit retained six high-severity paths from three advisories in development/browser tooling (extract-zip and the Zod 3 chromium-bidi chain). Path counts are not counts of exploitable production vulnerabilities.
+At the 2026-11-02 dependency review the production audit returned zero findings; the full audit retained six high-severity paths from three advisories in development/browser tooling (extract-zip and the Zod 3 chromium-bidi chain). Path counts are not counts of exploitable production vulnerabilities.
 
-## Future upstream sync and release
+## Syncing with upstream
 
-1. Compare upstream changes against the preserved paths above and keep unrelated local work intact.
-2. Use the repository package manager and lockfile; review scoped overrides and affected regression tests.
-3. Keep source checks, CI, provider build readiness, live-page checks, and external-service behavior as separate evidence.
-4. Inspect added files and diffs for credentials before publishing. Store real credentials, deployment addresses for private services, user data and environment values outside Git.
-5. After the reviewed commit is deployed, verify the intended domain and indexing policy. Remove only task-created branches that are already merged; preserve unrelated and unmerged branches.
+1. **Bring upstream into `main`**
+   ```bash
+   git fetch upstream
+   git switch main
+   git merge upstream/main
+   ```
+   Resolve conflicts using the tables above (fork intent wins for the listed paths, upstream wins elsewhere). For `yarn.lock`, take upstream's file, then run `yarn install` to regenerate it with the fork resolutions from `package.json`.
+2. **Check `main`**: `npx jest __tests__/lib/search-index-policy.test.js __tests__/lib/sitemap.xml.test.js`, then `yarn build`.
+3. **Carry it to the theme branch**
+   ```bash
+   git switch feat/field-notes-theme
+   git merge main
+   ```
+   Conflicts here should only be in the core files listed under "Core files patched for the theme".
+4. **Check the theme**: `npx jest __tests__/themes/field-notes.test.js`, `npx eslint themes/field-notes`, `yarn build`, then `yarn dev` and look at the home page (hero, home lab panel, notes, work), an article (`/article/dev5`), a photo diary (`/article/live2`) and the photo contact sheet (`/category/拍的照片`) at phone, ~720px, ~1100px and wide widths.
+5. **Push** `main` and `feat/field-notes-theme` to `origin`. Pushing the theme branch deploys production.
+6. **Verify production** at <https://me.mingzhe.uk>: page renders, no console errors, client-side navigation loads `/_next/data/<buildId>/zh-CN/...` with 200, and the indexing policy headers are intact.
+7. Inspect diffs for credentials before publishing. Real credentials, private service addresses, user data and environment values stay outside Git.
+
+## Updating this file
+
+When a change touches anything outside `themes/field-notes`, `public/themes/field-notes` or the theme test, add the file and its intent to the matching table above in the same commit.
