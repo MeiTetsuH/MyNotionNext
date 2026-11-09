@@ -1010,10 +1010,10 @@ export const NotebookStyle = () => (
       fill: #f5f2e9;
     }
     #now .lab-term .lab-term-clock {
-      font-size: 27px;
+      font-size: 24px;
       font-weight: 700;
       fill: var(--green);
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
     #now .lab-term .lab-term-line {
       font-size: 19px;
@@ -1264,7 +1264,7 @@ export const NotebookStyle = () => (
       }
     }
 
-    /* Note card: lives in the copy column so the drawing stays clean */
+    /* Note card: lives in the copy column on wide screens and under the drawing when stacked */
     #now .lab-note-card {
       position: relative;
       margin: 26px 0 0;
@@ -1273,6 +1273,21 @@ export const NotebookStyle = () => (
       border: 2px dashed rgba(32, 33, 30, 0.45);
       transform: rotate(-0.4deg);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    #now .lab-note-card.is-art {
+      display: none;
+    }
+    @media (max-width: 1279px) {
+      #now .lab-note-card.is-art {
+        display: block;
+        width: 100%;
+        max-width: 660px;
+        margin: 8px auto 0;
+        box-sizing: border-box;
+      }
+      #now .lab-note-card.is-copy {
+        display: none;
+      }
     }
     #now .lab-note-card.is-open {
       border: 2px solid var(--ink);

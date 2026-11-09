@@ -38,6 +38,7 @@ import {
   transitCopy,
   filterDisplayTags,
   formatNotionDate,
+  formatPostSummary,
   getCombinedPhotos,
   getLocalizedBlogPosts,
   getPostSection,
@@ -652,20 +653,25 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
     }
   }, [post, router])
 
+  // Only photo posts use the "place @ settings @ description" summary format
+  const isPhotoPost = Boolean(post) && getPostSection(post) === 'photo'
   const photoInfo = useMemo(
     () =>
-      post?.summary && String(post.summary).includes('@')
+      isPhotoPost && post?.summary && String(post.summary).includes('@')
         ? parsePhotoSummary(post.summary, lang)
         : null,
-    [post?.summary, lang]
+    [isPhotoPost, post?.summary, lang]
   )
 
+  const hasPhotoMeta = Boolean(
+    photoInfo && (photoInfo.place || photoInfo.settings)
+  )
   const displayTitle = post
     ? localizedResolution.titleOverride || parseMultiLang(post.title, lang)
     : ''
   const displaySummary = post
     ? localizedResolution.summaryOverride ||
-      (photoInfo?.description || parseMultiLang(post.summary, lang))
+      (hasPhotoMeta ? photoInfo.description : parseMultiLang(post.summary, lang))
     : ''
 
   useEffect(() => {
@@ -791,7 +797,7 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
                 <p className='article-summary-quote'>{displaySummary}</p>
               )}
 
-              {photoInfo && (photoInfo.place || photoInfo.settings) && (
+              {hasPhotoMeta && (
                 <div className='article-photo-meta mono'>
                   {[photoInfo.place, photoInfo.settings].filter(Boolean).join(' · ')}
                 </div>
@@ -988,7 +994,9 @@ const LayoutPostList = props => {
 
               {post.summary && (
                 <p className='note-memo-desc'>
-                  {parseMultiLang(post.summary, lang)}
+                  {getPostSection(post) === 'photo'
+                    ? formatPostSummary(post.summary, lang)
+                    : parseMultiLang(post.summary, lang)}
                 </p>
               )}
 

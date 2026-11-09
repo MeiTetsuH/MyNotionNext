@@ -33,8 +33,12 @@ export function parseMultiLang(str, lang = 'zh') {
   return parts[0]
 }
 
+const PHOTO_SETTINGS_PATTERN =
+  /\b\d+(?:\.\d+)?\s?mm\b|\bf\/\d|\biso\s?\d|\b1\/\d+|\b\d{1,2}(?:\.\d+)?s\b/i
+
 /**
- * 结构化解析照片专用 summary："地点(可三语) @ 参数 @ 描述(可三语)"
+ * 结构化解析照片专用 summary："地点(可三语) @ 参数 @ 描述(可三语)" 或 "地点(可三语) @ 参数"
+ * 只用于照片文章（getPostSection === 'photo'），普通文章摘要请用 parseMultiLang
  */
 export function parsePhotoSummary(str, lang = 'zh') {
   if (!str) return { place: '', settings: '', description: '' }
@@ -46,11 +50,44 @@ export function parsePhotoSummary(str, lang = 'zh') {
     const description = parseMultiLang(segments.slice(2).join(' @ '), lang)
     return { place, settings, description }
   }
+  if (segments.length === 2) {
+    const place = parseMultiLang(segments[0] || '', lang)
+    const second = segments[1] || ''
+    // Focal length, aperture, ISO, shutter fraction or seconds; word boundaries
+    // keep prose like "Miso", "Hmm" or "the 1990s" from counting as settings
+    const looksLikeSettings =
+      PHOTO_SETTINGS_PATTERN.test(second) && !second.includes('||')
+    if (looksLikeSettings) {
+      return { place, settings: second, description: '' }
+    }
+    return {
+      place,
+      settings: '',
+      description: parseMultiLang(second, lang)
+    }
+  }
   return {
     place: '',
     settings: '',
     description: parseMultiLang(raw, lang)
   }
+}
+
+/**
+ * Format a photo post's summary for cards/lists: the description when there
+ * is one, otherwise "place · settings", never raw `@` segments or another
+ * language's text. Call it for photo posts only; other posts use parseMultiLang.
+ */
+export function formatPostSummary(str, lang = 'zh') {
+  if (!str) return ''
+  const raw = String(str).trim()
+  if (raw.includes('@')) {
+    const { place, settings, description } = parsePhotoSummary(raw, lang)
+    if (place || settings) {
+      return description || [place, settings].filter(Boolean).join(' · ')
+    }
+  }
+  return parseMultiLang(raw, lang)
 }
 
 const CATEGORY_I18N = {
@@ -190,20 +227,26 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
 
   const notionPhotos = notionPhotoPages
     .map((p, idx) => {
-      // summary 格式约定: "地点(可三语) @ 参数 @ 描述(可三语)"
-      const {
-        place: placeText,
-        settings: settingsTextRaw,
-        description: descText
-      } = parsePhotoSummary(p.summary, lang)
-      const settingsText = settingsTextRaw || '33mm'
-      const formattedDate = formatNotionDate(p)
-      const titleText = parseMultiLang(p.title, lang)
-
       const slugStr = String(p.slug || '').trim()
       const cleanSlug = slugStr.replace(/^\/?(?:en\/|ja\/)?(?:article\/)?/i, '')
       const fileSlug = cleanSlug.startsWith('photo-') ? cleanSlug.slice(6) : ''
       const matchedLocal = fileSlug ? LOCAL_PHOTO_BY_FILE.get(fileSlug) : null
+
+      // summary 格式约定: "地点(可三语) @ 参数 @ 描述(可三语)" 或 "地点(可三语) @ 参数"
+      const {
+        place: placeTextRaw,
+        settings: settingsTextRaw,
+        description: descTextRaw
+      } = parsePhotoSummary(p.summary, lang)
+      const placeText =
+        placeTextRaw || (matchedLocal?.meta?.place ? t(matchedLocal.meta.place) : '')
+      const settingsText =
+        settingsTextRaw || matchedLocal?.meta?.settings || '33mm'
+      const descText =
+        descTextRaw ||
+        (matchedLocal?.meta?.description ? t(matchedLocal.meta.description) : '')
+      const formattedDate = formatNotionDate(p)
+      const titleText = parseMultiLang(p.title, lang)
 
       const rawCover = String(p.pageCover || p.pageCoverThumbnail || '')
       let decodedCover = rawCover
@@ -226,7 +269,7 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
         : titleText
 
       return {
-        key: `notion-${p.id || cleanSlug || idx}`,
+        key: `notion-${p.id || p.short_id || cleanSlug || idx}`,
         isNotion: true,
         orderHint: matchedLocal ? matchedLocal.orderIdx : 900 + idx,
         thumbSrc,
@@ -251,7 +294,7 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
       }
       const orderDiff = (a.orderHint ?? 999) - (b.orderHint ?? 999)
       if (orderDiff !== 0) return orderDiff
-      return String(a.id || '').localeCompare(String(b.id || ''))
+      return String(a.key || '').localeCompare(String(b.key || ''))
     })
   }
 
@@ -731,6 +774,29 @@ export function resolveLocalizedBlockMap(blockMap, postId, lang = 'zh') {
 }
 
 /**
+ * Reduce a post to a single language for feed output (RSS / Atom / JSON Feed):
+ * the title and summary keep one `||` variant, photo summaries drop the `@`
+ * segments, and a body with `[ZH]` / `[EN]` / `[JA]` sections keeps only that
+ * language's section. Returns a new object; the input post is not modified.
+ */
+export function localizeFeedPost(post, lang = 'zh') {
+  if (!post || typeof post !== 'object') return post
+  const resolved = post.blockMap
+    ? resolveLocalizedBlockMap(post.blockMap, post.id, lang)
+    : null
+  const summary =
+    getPostSection(post) === 'photo'
+      ? formatPostSummary(post.summary, lang)
+      : parseMultiLang(post.summary, lang)
+  return {
+    ...post,
+    title: resolved?.titleOverride || parseMultiLang(post.title, lang),
+    summary: resolved?.summaryOverride || summary,
+    ...(resolved ? { blockMap: resolved.blockMap } : {})
+  }
+}
+
+/**
  * Parse a Notion `做的东西` (`work`) page (and its prefetched `blockMap`) into a rich
  * WorkSection project descriptor supporting `[ZH]`/`[EN]`/`[JA]` toggles, `||` strings,
  * quotes/headings, paragraphs, numbered/bulleted highlights, bookmarks/links, and multi-tab screenshots.
@@ -988,6 +1054,11 @@ const NOTE_TEXT_TYPES = new Set([
   'header',
   'sub_header',
   'sub_sub_header',
+  'header_4',
+  'heading_1',
+  'heading_2',
+  'heading_3',
+  'heading_4',
   'to_do',
   'toggle'
 ])

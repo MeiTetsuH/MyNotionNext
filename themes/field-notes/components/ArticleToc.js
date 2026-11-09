@@ -2,23 +2,43 @@ import React, { useEffect, useState } from 'react'
 import { useLang } from './LangContext'
 
 const MIN_HEADINGS = 3
+const INDENT_BY_CLASS = [
+  ['notion-h-indent-0', 1],
+  ['notion-h-indent-1', 2],
+  ['notion-h-indent-2', 3]
+]
 const LEVEL_BY_CLASS = [
   ['notion-h1', 1],
   ['notion-h2', 2],
-  ['notion-h3', 3]
+  ['notion-h3', 3],
+  ['notion-h4', 4]
 ]
 
 const readHeadings = container => {
   if (!container) return []
-  return Array.from(container.querySelectorAll('.notion-h'))
+  const raw = Array.from(container.querySelectorAll('.notion-h'))
     .map(el => {
       const id = el.getAttribute('data-id') || el.querySelector('[id]')?.id
       const text = String(el.innerText || el.textContent || '').trim()
-      const level =
+      const indentLevel = INDENT_BY_CLASS.find(([cls]) =>
+        el.classList.contains(cls)
+      )?.[1]
+      const rawLevel =
         LEVEL_BY_CLASS.find(([cls]) => el.classList.contains(cls))?.[1] || 3
-      return id && text ? { id, text, level } : null
+      return id && text ? { id, text, indentLevel, rawLevel } : null
     })
     .filter(Boolean)
+
+  if (raw.length === 0) return []
+  const minRaw = Math.min(...raw.map(item => item.rawLevel))
+  return raw.map(item => {
+    const normalized = Math.min(3, Math.max(1, item.rawLevel - minRaw + 1))
+    return {
+      id: item.id,
+      text: item.text,
+      level: item.indentLevel || normalized
+    }
+  })
 }
 
 /**
@@ -34,7 +54,8 @@ export const ArticleToc = ({ containerId, contentKey, onAvailabilityChange }) =>
   useEffect(() => {
     const container = document.getElementById(containerId)
     if (!container) return undefined
-    const signature = list => list.map(i => `${i.id}:${i.text}`).join('|')
+    const signature = list =>
+      list.map(i => `${i.id}:${i.level}:${i.text}`).join('|')
     const scan = () => {
       const next = readHeadings(container)
       setItems(prev => (signature(prev) === signature(next) ? prev : next))

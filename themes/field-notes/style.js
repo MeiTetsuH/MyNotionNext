@@ -296,9 +296,11 @@ a,button,summary{touch-action:manipulation}
     --note-fs:clamp(10px,3.6cqi,12px);
   }
 }
-#now .now-paper.is-notebook-open .lab-art{
-  align-self:stretch;
-  height:100%;
+@media(min-width:1280px){
+  #now .now-paper.is-notebook-open .lab-art{
+    align-self:stretch;
+    height:100%;
+  }
 }
 #now .now-paper.is-notebook-open .lab-stack-art,
 #now .now-paper:has(.lab-notebook[open]) .lab-stack-art{
@@ -309,6 +311,15 @@ a,button,summary{touch-action:manipulation}
 }
 #now .lab-stack-inline{
   display:none;
+}
+@media(max-width:1279px){
+  #now .now-paper.is-notebook-open .lab-stack-art,
+  #now .now-paper:has(.lab-notebook[open]) .lab-stack-art{display:none!important}
+  #now .lab-notebook[open] .lab-stack-inline{
+    display:flex;
+    flex-direction:column;
+    margin-top:24px;
+  }
 }
 #now .lab-stack-tag{
   position:absolute;

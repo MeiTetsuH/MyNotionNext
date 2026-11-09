@@ -28,17 +28,19 @@ Almost all custom work lives in the theme. Outside the theme the deltas are smal
 
 | Paths | Content |
 | --- | --- |
-| `themes/field-notes/**` | The whole theme: `index.js` layouts, `style.js` (original styles), `notebook-style.js` (notebook redesign layer: Notion block styling, polaroid lightbox, contact sheet, home lab panel, hero fixes), `data.js` (Notion parsing, multilingual `"中 \|\| EN \|\| 日"` strings, photo summaries `"place @ settings @ description"`, `[ZH]/[EN]/[JA]` block toggles, `extractNoteLines`), `config.js`, `components/*` |
+| `themes/field-notes/**` | The whole theme: `index.js` layouts, `style.js` (original styles), `notebook-style.js` (notebook redesign layer: Notion block styling, polaroid lightbox, contact sheet, home lab panel, hero fixes), `data.js` (Notion parsing, multilingual `"中 \|\| EN \|\| 日"` strings, photo summaries `"place @ settings @ description"` parsed only for photo posts, `[ZH]/[EN]/[JA]` block toggles, `extractNoteLines`, `localizeFeedPost` for single-language feed items), `config.js`, `components/*` |
 | `themes/fieldnotes`, `public/themes/fieldnotes`, `public/fieldnotes` | Symlinks to the `field-notes` folders (legacy aliases); keep them as symlinks |
 | `public/themes/field-notes/assets/**` | Theme images; `home-lab-set.webp` is the current home lab artwork (transparent) |
-| `__tests__/themes/field-notes.test.js` | Theme regression tests (translator, project parsing, SEO language pick, Tokyo schedule, note extraction) |
+| `__tests__/themes/field-notes.test.js` | Theme regression tests (translator, project parsing, photo summary parsing, SEO language pick, Tokyo schedule, note extraction) |
 
 ### Core files patched for the theme
 
 | Path | Fork change | When merging upstream |
 | --- | --- | --- |
 | `pages/index.js` | For `field-notes`: return all published posts (no pagination) and prefetch Notion blocks of `做的东西` / project pages into `workProjectPages`, with `parsedByLang` built via `createTranslator` so SSR labels are not raw keys | Keep both blocks; re-apply on top of upstream's `getStaticProps` if it was restructured |
-| `components/SEO.js` | `pickPrimaryLanguage()` so multilingual titles/descriptions emit only the first language in meta tags; brand favicon / apple-touch-icon links | Keep the helper and its use in the post branch of `getSEOMeta` |
+| `pages/archive/index.js`, `pages/category/[category]/index.js`, `pages/tag/[tag]/index.js` | For `field-notes`: category and tag pages return all published posts (no pagination); post lists go through `cleanPostSummaries` so page props carry summary fields only | Keep the theme check and the `cleanPostSummaries` calls |
+| `components/SEO.js` | `pickPrimaryLanguage()` so multilingual titles/descriptions emit only the first language in meta tags; a photo summary, recognised by camera settings in its second `@` segment, becomes `place · settings · description`; brand favicon / apple-touch-icon links | Keep the helper and its use in the post branch of `getSEOMeta`; its `PHOTO_SETTINGS_PATTERN` mirrors the one in `themes/field-notes/data.js` |
+| `lib/utils/rss.js`, `__tests__/lib/utils/rssFeed.test.js` | For `field-notes`: `createFeedLocalizer()` reduces each item's title, summary and full-content body to the site language (`LANG`) through `localizeFeedPost`; posts are copied before rendering. Other themes are unchanged | Keep the localizer and its use in `createFeed` / `createFeedContent`; the build-time `/rss/*` files and `/api/rss` both go through `createFeed` |
 | `pages/_document.js` | Force light mode when `THEME === 'field-notes'`; `initLangScript` sets `window.__INIT_LANG__` from `h-mz-language` (localStorage/cookie), `?lang=`, or the browser to avoid a language flash | Keep both scripts; they are no-ops for other themes |
 | `components/ExternalPlugins.js` | Timers cleaned up on unmount, `GLOBAL_JS` injected as a script element instead of `eval`, 51la/Chatbase via `next/script` | Re-apply only if upstream still uses `eval` / bare script tags |
 | `pages/_app.js` | `<SEO>` placement adjusted | Trivial; take upstream and re-check SEO renders once |
@@ -119,9 +121,9 @@ At the 2026-11-02 dependency review the production audit returned zero findings;
    git merge main
    ```
    Conflicts here should only be in the core files listed under "Core files patched for the theme".
-4. **Check the theme**: `npx jest __tests__/themes/field-notes.test.js`, `npx eslint themes/field-notes`, `yarn build`, then `yarn dev` and look at the home page (hero, home lab panel, notes, work), an article (`/article/dev5`), a photo diary (`/article/live2`) and the photo contact sheet (`/category/拍的照片`) at phone, ~720px, ~1100px and wide widths.
+4. **Check the theme**: `npx jest __tests__/themes/field-notes.test.js __tests__/lib/utils/rssFeed.test.js`, `npx eslint themes/field-notes`, `yarn build`, then `yarn dev` and look at the home page (hero, home lab panel, notes, work), an article (`/article/dev5`), a photo diary (`/article/live2`) and the photo contact sheet (`/category/拍的照片`) at phone, ~720px, ~1100px and wide widths (at 1280px and up the home lab panel sits beside its artwork, the article TOC moves to a side column and the home notes grid has three columns; up to 1279px they stack and the notes grid shows two cards). Open `/api/rss` and check that item titles, descriptions and bodies are in one language only.
 5. **Push** `main` and `feat/field-notes-theme` to `origin`. Pushing the theme branch deploys production.
-6. **Verify production** at <https://me.mingzhe.uk>: page renders, no console errors, client-side navigation loads `/_next/data/<buildId>/zh-CN/...` with 200, and the indexing policy headers are intact.
+6. **Verify production** at <https://me.mingzhe.uk>: page renders, no console errors, client-side navigation loads `/_next/data/<buildId>/zh-CN/...` with 200, the indexing policy headers are intact, and `/rss/feed.xml` carries single-language items.
 7. Inspect diffs for credentials before publishing. Real credentials, private service addresses, user data and environment values stay outside Git.
 
 ## Updating this file

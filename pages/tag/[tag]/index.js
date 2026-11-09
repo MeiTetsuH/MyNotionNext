@@ -1,6 +1,6 @@
 import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
-import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
+import { cleanPostSummaries, fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { DynamicLayout } from '@/themes/theme'
 
 /**
@@ -26,13 +26,14 @@ export async function getStaticProps({ params: { tag }, locale }) {
   props.postCount = props.posts.length
 
   // 处理分页
+  const activeTheme = siteConfig('THEME', BLOG.THEME, props?.NOTION_CONFIG)
   const POST_LIST_STYLE = siteConfig(
     'POST_LIST_STYLE',
     'page',
     props?.NOTION_CONFIG
   )
-  if (POST_LIST_STYLE === 'scroll') {
-    // 滚动列表 给前端返回所有数据
+  if (POST_LIST_STYLE === 'scroll' || activeTheme === 'field-notes') {
+    // 滚动列表或 field-notes 主题默认给前端返回所有已发布数据
   } else if (POST_LIST_STYLE === 'page') {
     props.posts = props.posts?.slice(
       0,
@@ -40,6 +41,8 @@ export async function getStaticProps({ params: { tag }, locale }) {
     )
   }
 
+  props.posts = cleanPostSummaries(props.posts)
+  props.latestPosts = cleanPostSummaries(props.latestPosts)
   props.tag = tag
   delete props.allPages
   return {

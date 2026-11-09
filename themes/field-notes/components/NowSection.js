@@ -19,6 +19,11 @@ export const NowSection = () => {
             HOME LAB / 2026
           </span>
           <LabFigure activeId={activeTag} onSelect={setActiveTag} />
+          <LabNoteCard
+            variant='art'
+            activeId={activeTag}
+            onClose={() => setActiveTag(null)}
+          />
           <span className='lab-handwritten' aria-hidden='true'>
             a little studio, at home.
           </span>

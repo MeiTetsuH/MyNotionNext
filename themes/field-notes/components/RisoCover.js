@@ -5,10 +5,15 @@ import React from 'react'
  * so AI illustrations and real photos read as one printed series.
  * Hovering the parent card reveals the original colours.
  */
-export const RisoCover = ({ className = '', frameClassName = '', ...imgProps }) => (
+export const RisoCover = ({
+  className = '',
+  frameClassName = '',
+  alt = '',
+  ...imgProps
+}) => (
   <span className={`riso-cover ${frameClassName}`}>
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img className={className} {...imgProps} />
+    <img className={className} alt={alt} {...imgProps} />
   </span>
 )
 

@@ -1,4 +1,6 @@
 import { createFeed, createFeedFileUrl } from '@/lib/utils/rss'
+import { getPostBlocks } from '@/lib/db/SiteDataApi'
+import ReactDOMServer from 'react-dom/server'
 
 const addItemMock = jest.fn()
 const rss2Mock = jest.fn(() => '<rss>ok</rss>')
@@ -148,6 +150,91 @@ describe('createFeed', () => {
       link: 'https://example.com/blog',
       title: 'Demo Site',
       language: 'zh-CN'
+    })
+  })
+})
+
+describe('createFeed with field-notes multilingual posts', () => {
+  const FIELD_NOTES_CONFIG = { ...NOTION_CONFIG, THEME: 'field-notes' }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('keeps only the site language of inline trilingual titles and summaries', async () => {
+    await createFeed({
+      siteInfo,
+      NOTION_CONFIG: FIELD_NOTES_CONFIG,
+      posts: [
+        {
+          id: 'dev3',
+          title: 'Nas折腾合集 || Building Around a Home NAS || NAS を中心に',
+          slug: 'article/dev3',
+          category: '家庭架构',
+          summary: '从手搓一台家庭服务器开始。 || Starting from a home server. || 自宅サーバーから。',
+          publishDay: '2025-01-02'
+        },
+        {
+          id: 'photo-sengen',
+          title: '蓝天下的一抹朱红 || A Dash of Vermilion || 青空に、ひとさじの朱色',
+          slug: 'article/photo-sengen',
+          category: '拍的照片',
+          summary: '静冈·浅间大社 || Shizuoka · Sengen Taisha || 静岡・浅間大社 @ 33mm · f/2.5 · 1/10500s · ISO 640',
+          publishDay: '2025-01-03'
+        }
+      ],
+      allPages: [],
+      renderContent: () => Promise.resolve('content')
+    })
+
+    expect(addItemMock.mock.calls[0][0]).toMatchObject({
+      title: 'Nas折腾合集',
+      description: '从手搓一台家庭服务器开始。'
+    })
+    expect(addItemMock.mock.calls[1][0]).toMatchObject({
+      title: '蓝天下的一抹朱红',
+      description: '静冈·浅间大社 · 33mm · f/2.5 · 1/10500s · ISO 640'
+    })
+  })
+
+  it('renders only the site language section of the body', async () => {
+    getPostBlocks.mockResolvedValueOnce({
+      block: {
+        p1: { value: { id: 'p1', type: 'page', content: ['tz', 'te'] } },
+        tz: { value: { id: 'tz', type: 'toggle', properties: { title: [['[ZH]']] }, content: ['pz'] } },
+        pz: { value: { id: 'pz', type: 'text', properties: { title: [['中文正文']] } } },
+        te: { value: { id: 'te', type: 'toggle', properties: { title: [['[EN]']] }, content: ['pe'] } },
+        pe: { value: { id: 'pe', type: 'text', properties: { title: [['English body']] } } }
+      }
+    })
+
+    const sourcePost = { id: 'p1', title: '中文 || English', slug: 'p1', summary: 's' }
+    await createFeed({
+      siteInfo,
+      NOTION_CONFIG: FIELD_NOTES_CONFIG,
+      posts: [sourcePost],
+      allPages: []
+    })
+
+    const renderedPost =
+      ReactDOMServer.renderToString.mock.calls[0][0].props.post
+    expect(renderedPost.blockMap.block.p1.value.content).toEqual(['pz'])
+    expect(addItemMock.mock.calls[0][0].title).toBe('中文')
+    expect(sourcePost.blockMap).toBeUndefined()
+  })
+
+  it('leaves posts untouched for other themes', async () => {
+    await createFeed({
+      siteInfo,
+      NOTION_CONFIG: { ...NOTION_CONFIG, THEME: 'simple' },
+      posts: [{ id: 'x', title: 'A || B', slug: 'x', summary: 'a || b' }],
+      allPages: [],
+      renderContent: () => Promise.resolve('content')
+    })
+
+    expect(addItemMock.mock.calls[0][0]).toMatchObject({
+      title: 'A || B',
+      description: 'a || b'
     })
   })
 })

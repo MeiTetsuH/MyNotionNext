@@ -399,28 +399,50 @@ const getIsoTime = value => {
   return date.toISOString()
 }
 
+// Keep in sync with PHOTO_SETTINGS_PATTERN in themes/field-notes/data.js
+const PHOTO_SETTINGS_PATTERN =
+  /\b\d+(?:\.\d+)?\s?mm\b|\bf\/\d|\biso\s?\d|\b1\/\d+|\b\d{1,2}(?:\.\d+)?s\b/i
+
+const firstLanguage = text => String(text || '').split('||')[0].trim()
+
+/**
+ * Reduce inline multilingual text ("中文 || English || 日本語") to its first
+ * (primary) language for crawler-facing meta.
+ *
+ * A photo summary ("place @ settings" or "place @ settings @ description") is
+ * recognised only by camera settings in its second segment, then reduced to
+ * "place · settings · description". Anything else, including prose with
+ * several " @ ", keeps its whole primary-language clause; text without "||"
+ * is returned unchanged.
+ */
+export const pickPrimaryLanguage = value => {
+  if (value === null || value === undefined) return value
+  const raw = String(value)
+  const segments = raw.split(/\s+@\s+/)
+  const settings = segments[1]
+  const isPhotoSummary =
+    segments.length >= 2 &&
+    !settings.includes('||') &&
+    PHOTO_SETTINGS_PATTERN.test(settings)
+  if (isPhotoSummary) {
+    return [
+      firstLanguage(segments[0]),
+      settings.trim(),
+      // The description may itself contain " @ "
+      firstLanguage(segments.slice(2).join(' @ '))
+    ]
+      .filter(Boolean)
+      .join(' · ')
+  }
+  if (!raw.includes('||')) return raw
+  return firstLanguage(raw)
+}
+
 /**
  * 获取SEO信息
  * @param {*} props
  * @param {*} router
  */
-/**
- * Reduce inline multilingual text ("中文 || English || 日本語") to its first
- * (primary) language for crawler-facing meta. Segments separated by " @ "
- * (photo summaries: "place @ settings @ description") are reduced individually.
- * Text without "||" is returned unchanged.
- */
-export const pickPrimaryLanguage = value => {
-  if (value === null || value === undefined) return value
-  const raw = String(value)
-  if (!raw.includes('||')) return raw
-  return raw
-    .split(/\s+@\s+/)
-    .map(segment => segment.split('||')[0].trim())
-    .filter(Boolean)
-    .join(' · ')
-}
-
 const getSEOMeta = (props, router, locale) => {
   const { post, siteInfo, tag, category, page } = props
   const keyword = router?.query?.s

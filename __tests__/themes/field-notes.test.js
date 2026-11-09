@@ -1,6 +1,7 @@
 import {
   parseMultiLang,
   parsePhotoSummary,
+  formatPostSummary,
   formatNotionDate,
   getLocalizedBlogPosts,
   createTranslator,
@@ -41,6 +42,44 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
       expect(parsedJa.place).toBe('東京 · 新宿')
       expect(parsedJa.description).toBe('秋の雨')
     })
+
+    test('correctly parses 2-part photo summary (place @ settings) without leaking EXIF into description', () => {
+      const twoPart =
+        '富士宫 · 浅间大社 || Fujinomiya · Sengen Taisha || 富士宮・浅間大社 @ 33mm · f/4.5 · 1/1100s · ISO 320'
+      const parsedZh = parsePhotoSummary(twoPart, 'zh')
+      expect(parsedZh.place).toBe('富士宫 · 浅间大社')
+      expect(parsedZh.settings).toBe('33mm · f/4.5 · 1/1100s · ISO 320')
+      expect(parsedZh.description).toBe('')
+
+      const parsedEn = parsePhotoSummary(twoPart, 'en')
+      expect(parsedEn.place).toBe('Fujinomiya · Sengen Taisha')
+      expect(parsedEn.settings).toBe('33mm · f/4.5 · 1/1100s · ISO 320')
+      expect(parsedEn.description).toBe('')
+
+      const parsedJa = parsePhotoSummary(twoPart, 'ja')
+      expect(parsedJa.place).toBe('富士宮・浅間大社')
+      expect(parsedJa.settings).toBe('33mm · f/4.5 · 1/1100s · ISO 320')
+      expect(parsedJa.description).toBe('')
+
+      expect(formatPostSummary(twoPart, 'ja')).toBe(
+        '富士宮・浅間大社 · 33mm · f/4.5 · 1/1100s · ISO 320'
+      )
+    })
+
+    test('recognises settings without a focal length', () => {
+      const parsed = parsePhotoSummary('东京 || Tokyo || 東京 @ f/2 · 1/60 · ISO 800', 'en')
+      expect(parsed.place).toBe('Tokyo')
+      expect(parsed.settings).toBe('f/2 · 1/60 · ISO 800')
+      expect(parsed.description).toBe('')
+    })
+
+    test('does not mistake prose in the second segment for camera settings', () => {
+      for (const prose of ['Miso soup at home', 'Hmm, rain again', 'Photos from the 1990s']) {
+        const parsed = parsePhotoSummary(`家 @ ${prose}`, 'en')
+        expect(parsed.settings).toBe('')
+        expect(parsed.description).toBe(prose)
+      }
+    })
   })
 
   describe('formatNotionDate deterministic timezone formatting', () => {
@@ -76,6 +115,25 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
       const sorted = getLocalizedBlogPosts(posts, 'zh')
       expect(sorted[0].id).toBe('b')
       expect(sorted[1].id).toBe('a')
+    })
+
+    test('keeps a non-photo summary containing " @ " intact', () => {
+      const posts = [
+        {
+          id: 'talk',
+          title: 'Talk',
+          slug: 'talk',
+          category: '随便聊聊',
+          summary: 'Notes from a talk @ Tokyo || Notes from a talk @ Tokyo || 東京での講演メモ @ 渋谷',
+          date: { start_date: '2024-10-01' }
+        }
+      ]
+      expect(getLocalizedBlogPosts(posts, 'zh')[0].localizedSummary).toBe(
+        'Notes from a talk @ Tokyo'
+      )
+      expect(getLocalizedBlogPosts(posts, 'ja')[0].localizedSummary).toBe(
+        '東京での講演メモ @ 渋谷'
+      )
     })
   })
 
@@ -130,6 +188,36 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
           '东京 · 新宿 || Tokyo · Shinjuku || 東京 · 新宿 @ 33mm f/2.8 @ 秋雨 || Autumn Rain || 秋の雨'
         )
       ).toBe('东京 · 新宿 · 33mm f/2.8 · 秋雨')
+      expect(
+        pickPrimaryLanguage('静冈·浅间大社 @ 33mm · f/2.5 · 1/10500s · ISO 640')
+      ).toBe('静冈·浅间大社 · 33mm · f/2.5 · 1/10500s · ISO 640')
+    })
+
+    test('keeps non-photo multilingual text containing " @ " intact in primary language', () => {
+      expect(
+        pickPrimaryLanguage(
+          'Notes from a talk @ Tokyo || Notes from a talk @ Tokyo || 東京での講演メモ @ 渋谷'
+        )
+      ).toBe('Notes from a talk @ Tokyo')
+    })
+
+    test('does not treat prose with several " @ " as a photo summary', () => {
+      expect(pickPrimaryLanguage('Meetup @ Tokyo @ 2024')).toBe(
+        'Meetup @ Tokyo @ 2024'
+      )
+      expect(
+        pickPrimaryLanguage(
+          'Meetup @ Tokyo @ 2024 || Meetup @ Tokyo @ 2024 || 東京 @ 渋谷 @ 2024'
+        )
+      ).toBe('Meetup @ Tokyo @ 2024')
+    })
+
+    test('keeps a photo description that itself contains " @ "', () => {
+      expect(
+        pickPrimaryLanguage(
+          '东京 || Tokyo || 東京 @ 33mm · f/2 @ 秋雨 @ 新宿 || Rain @ Shinjuku || 雨 @ 新宿'
+        )
+      ).toBe('东京 · 33mm · f/2 · 秋雨 @ 新宿')
     })
 
     test('leaves plain text, emails and empty values untouched', () => {
@@ -179,18 +267,20 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
   describe('extractNoteLines for the back of a photo', () => {
     const blockMap = {
       block: {
-        p1: { value: { id: 'p1', type: 'page', content: ['t1', 'img', 't2'] } },
+        p1: { value: { id: 'p1', type: 'page', content: ['t1', 'img', 't2', 'h4'] } },
         t1: { value: { id: 't1', type: 'text', properties: { title: [['Blue sky, red shrine.']] } } },
         img: { value: { id: 'img', type: 'image', properties: { title: [['ignored']] } } },
         t2: { value: { id: 't2', type: 'bulleted_list', properties: { title: [['Place: Shizuoka']] }, content: ['t3'] } },
-        t3: { value: { id: 't3', type: 'text', properties: { title: [['nested line']] } } }
+        t3: { value: { id: 't3', type: 'text', properties: { title: [['nested line']] } } },
+        h4: { value: { id: 'h4', type: 'header_4', properties: { title: [['Subheading 4']] } } }
       }
     }
     test('keeps text blocks in order, flattens children and skips media', () => {
       expect(extractNoteLines(blockMap, 'p1', 'en')).toEqual([
         { type: 'text', text: 'Blue sky, red shrine.' },
         { type: 'bulleted_list', text: 'Place: Shizuoka' },
-        { type: 'text', text: 'nested line' }
+        { type: 'text', text: 'nested line' },
+        { type: 'header_4', text: 'Subheading 4' }
       ])
     })
   })

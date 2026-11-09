@@ -351,12 +351,12 @@ const ScreenTerminal = ({ state, secs, copy }) => {
     ? `♥ ${copy.beat} ${formatShort(state.beatLeft)}   ⇅ ${copy.photos} ${formatShort(state.photoLeft)}`
     : ''
   const clockText = `TOKYO ${secs === null ? '--:--:--' : formatClock(secs)}`
-  const clockRef = useFitText(SCREEN_RIGHT - LINE_X, clockText)
   const lineRef = useFitText(SCREEN_RIGHT - LINE_X, lineText)
-  const footRef = useFitText(SCREEN_RIGHT - COUNT_X, footText)
+  const footFitKey = `${copy.beat}|${copy.photos}|${Boolean(state)}`
+  const footRef = useFitText(SCREEN_RIGHT - COUNT_X, footFitKey)
   return (
     <g className='lab-term' transform='rotate(-4 412 530)'>
-      <text ref={clockRef} className='lab-term-clock' x={LINE_X} y='462'>
+      <text className='lab-term-clock' x={LINE_X} y='462'>
         {clockText}
       </text>
       <text ref={lineRef} className='lab-term-line' x={LINE_X} y='500'>
@@ -525,7 +525,7 @@ export const LabFigure = ({ activeId = null, onSelect }) => {
             style={boxStyle(h.box)}
             aria-label={copy.nodes[h.id].join(' · ')}
             aria-pressed={activeId === h.id}
-            aria-controls='lab-note-card'
+            aria-controls='lab-note-card lab-note-card-art'
             onClick={() => onSelect && onSelect(activeId === h.id ? null : h.id)}
           />
         ))}
@@ -535,15 +535,17 @@ export const LabFigure = ({ activeId = null, onSelect }) => {
   )
 }
 
-/** Note card for the selected device; sits in the copy column next to the drawing. */
-export const LabNoteCard = ({ activeId = null, onClose }) => {
+/** Note card for the selected device; sits in the copy column on wide screens and under the drawing when stacked. */
+export const LabNoteCard = ({ activeId = null, onClose, variant = 'copy' }) => {
   const { lang } = useLang()
   const copy = getLabCopy(lang)
   const label = activeId ? copy.nodes[activeId] : null
+  const hintText =
+    variant === 'art' ? copy.hint.replace(/^←/, '↑') : copy.hint
   return (
     <div
-      id='lab-note-card'
-      className={`lab-note-card${label ? ' is-open' : ''}`}
+      id={variant === 'art' ? 'lab-note-card-art' : 'lab-note-card'}
+      className={`lab-note-card is-${variant}${label ? ' is-open' : ''}`}
       role='region'
       aria-live='polite'>
       <span className='lab-note-tape' aria-hidden='true' />
@@ -561,7 +563,7 @@ export const LabNoteCard = ({ activeId = null, onClose }) => {
           </div>
         </>
       ) : (
-        <p className='lab-note-hint'>{copy.hint}</p>
+        <p className='lab-note-hint'>{hintText}</p>
       )}
     </div>
   )

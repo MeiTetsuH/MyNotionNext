@@ -1,6 +1,6 @@
 import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
-import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
+import { cleanPostSummaries, fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { isBrowser } from '@/lib/utils'
 import { formatDateFmt } from '@/lib/utils/formatDate'
 import { DynamicLayout } from '@/themes/theme'
@@ -33,12 +33,15 @@ const ArchiveIndex = props => {
 export async function getStaticProps({ locale }) {
   const props = await fetchGlobalAllData({ from: 'archive-index', locale })
   // 处理分页
-  props.posts = props.allPages?.filter(
-    page => page.type === 'Post' && page.status === 'Published'
+  props.posts = cleanPostSummaries(
+    props.allPages?.filter(
+      page => page.type === 'Post' && page.status === 'Published'
+    )
   )
+  props.latestPosts = cleanPostSummaries(props.latestPosts)
   delete props.allPages
 
-  const postsSortByDate = Object.create(props.posts)
+  const postsSortByDate = [...(props.posts || [])]
 
   postsSortByDate.sort((a, b) => {
     return b?.publishDate - a?.publishDate

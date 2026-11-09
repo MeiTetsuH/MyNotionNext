@@ -57,7 +57,7 @@ export const Lightbox = ({
   const { open, mode, index, screen, projectIndex } = viewerState
   const prevActiveElementRef = useRef(null)
   const [flipped, setFlipped] = useState(false)
-  const [noteLines, setNoteLines] = useState(null)
+  const [noteState, setNoteState] = useState({ key: '', lines: null })
 
   // Every new print starts face up
   useEffect(() => {
@@ -192,25 +192,24 @@ export const Lightbox = ({
     }
   }
 
-  // The back of a Notion photo is its page body: fetch it the first time the print is flipped
+  // The back of a Notion photo is its page body: prefetch when the print opens so flipping is instant
   const noteHref = back?.href || null
+  const noteKey = noteHref ? `${noteHref}|${lang}` : ''
+  const noteLines = noteState.key === noteKey ? noteState.lines : null
   useEffect(() => {
-    setNoteLines(null)
-  }, [noteHref, lang])
-  useEffect(() => {
-    if (!flipped || !noteHref || noteLines !== null) return undefined
+    if ((!open && !flipped) || !noteHref || noteLines !== null) return undefined
     let cancelled = false
     loadNoteLines(noteHref, lang)
       .then(lines => {
-        if (!cancelled) setNoteLines(lines)
+        if (!cancelled) setNoteState({ key: noteKey, lines })
       })
       .catch(() => {
-        if (!cancelled) setNoteLines([])
+        if (!cancelled) setNoteState({ key: noteKey, lines: [] })
       })
     return () => {
       cancelled = true
     }
-  }, [flipped, noteHref, lang, noteLines])
+  }, [open, flipped, noteHref, lang, noteKey, noteLines])
 
   const normalize = v => String(v || '').replace(/\s+/g, '').toLowerCase()
   const extraLines = (noteLines || []).filter(
