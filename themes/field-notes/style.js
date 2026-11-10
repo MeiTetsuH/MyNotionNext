@@ -16,13 +16,17 @@ const Style = () => {
     <style jsx global>{`
 /* ---------- tokens ---------- */
 :root{
-  --ink:#0c0c0d;
-  --bone:#f0ece1;
-  --card:#fffdf6;
-  --blue:#2b3bff;
-  --acid:#d9ff2f;
-  --pink:#ff4d9d;
-  --red:#ff3b1d;
+  /* Pantone references, sRGB approximations:
+     bone  11-4201 Cloud Dancer   blue 17-3938 Very Peri
+     acid  13-0647 Illuminating   pink 16-1546 Living Coral
+     red   18-1750 Viva Magenta */
+  --ink:#17161a;
+  --bone:#f0eee9;
+  --card:#fffdf8;
+  --blue:#6667ab;
+  --acid:#f5df4d;
+  --pink:#ff6f61;
+  --red:#bb2649;
   --muted:#5c5b54;
   --soft:#35352f;
 
@@ -536,7 +540,7 @@ a.fn-chip-tag:hover{background:var(--pink)}
   display:flex;flex-direction:column;gap:clamp(4px,2cqh,14px);
   padding:clamp(14px,7cqh,48px) clamp(16px,7cqw,56px);
   background-color:var(--bone);
-  background-image:repeating-linear-gradient(transparent 0 31px,#2b3bff2e 31px 33px);
+  background-image:repeating-linear-gradient(transparent 0 31px,color-mix(in srgb,var(--blue) 26%,transparent) 31px 33px);
   border:2px solid var(--ink);color:var(--ink);font-family:var(--hand);
 }
 #viewer .viewer-image-wrap.is-flipped #viewer-image{transform:rotateY(180deg)}
@@ -603,8 +607,8 @@ a.fn-chip-tag:hover{background:var(--pink)}
 #theme-field-notes #notion-article .notion-callout,
 #theme-field-notes #notion-article .notion-simple-table,
 #theme-field-notes #notion-article .notion-bookmark{border:var(--border)!important;box-shadow:6px 6px 0 var(--ink)!important}
-#theme-field-notes #notion-article .notion-callout{background:var(--acid)!important}
-#theme-field-notes #notion-article .notion-callout:nth-child(even){background:#ffd9ea!important}
+#theme-field-notes #notion-article .notion-callout{background:color-mix(in srgb,var(--acid) 42%,var(--card))!important}
+#theme-field-notes #notion-article .notion-callout:nth-child(even){background:color-mix(in srgb,var(--pink) 20%,var(--card))!important}
 #theme-field-notes #notion-article .notion-callout::after{display:none}
 #theme-field-notes #notion-article .notion-callout::before,
 #theme-field-notes #notion-article figure.notion-asset-wrapper-image::before{border:2px solid var(--ink);background:var(--pink)}
@@ -613,7 +617,7 @@ a.fn-chip-tag:hover{background:var(--pink)}
 #theme-field-notes #notion-article pre.notion-code{border:var(--border)!important;box-shadow:6px 6px 0 var(--pink)!important}
 #theme-field-notes #notion-article .notion-h1 .notion-h-title,
 #theme-field-notes #notion-article .notion-h2 .notion-h-title{font-family:var(--display);font-weight:900;letter-spacing:-.015em}
-#theme-field-notes #notion-article .notion-h3 .notion-h-title{font-family:var(--display);font-weight:900;background:linear-gradient(transparent 68%,#ff4d9d8c 68%)}
+#theme-field-notes #notion-article .notion-h3 .notion-h-title{font-family:var(--display);font-weight:900;background:linear-gradient(transparent 68%,color-mix(in srgb,var(--pink) 55%,transparent) 68%)}
 #theme-field-notes #notion-article a{color:var(--blue);font-weight:700;text-decoration-thickness:2px}
 #theme-field-notes #notion-article a:hover{background:var(--acid);color:var(--ink)}
 #theme-field-notes #notion-article .notion-quote{font-family:var(--hand)!important}
@@ -699,7 +703,7 @@ a.fn-chip-tag:hover{background:var(--pink)}
 /* ---------- motion ---------- */
 @keyframes fnTape{to{transform:translateX(-25%)}}
 @keyframes fnSpin{to{transform:rotate(360deg)}}
-@keyframes fnPulse{0%,100%{box-shadow:0 0 0 0 #d9ff2f99}50%{box-shadow:0 0 0 7px #d9ff2f00}}
+@keyframes fnPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acid) 60%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
 @keyframes fnWiggle{0%,100%{transform:translateX(0)}25%{transform:translateX(6px) rotate(1deg)}75%{transform:translateX(-4px) rotate(-1deg)}}
 @keyframes fnDevelop{
   0%{filter:brightness(1.85) contrast(.42) saturate(.15) sepia(.12)}

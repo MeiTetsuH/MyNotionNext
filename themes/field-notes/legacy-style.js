@@ -1269,7 +1269,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     width: 86px;
     height: 20px;
     margin-left: -43px;
-    background: rgba(255, 77, 157, 0.85);
+    background: rgba(255, 111, 97, 0.85);
     transform: rotate(-3deg);
 }
 #now .lab-note-card strong {
@@ -1624,7 +1624,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
 #theme-field-notes #notion-article .notion-h3 .notion-h-title {
     background: linear-gradient(
         transparent 70%,
-        rgba(255, 77, 157, 0.55) 70%
+        rgba(255, 111, 97, 0.55) 70%
       );
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
@@ -1651,7 +1651,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     width: 104px;
     height: 22px;
     margin-left: -52px;
-    background: rgba(255, 77, 157, 0.78);
+    background: rgba(255, 111, 97, 0.78);
     border-left: 1px dashed rgba(32, 33, 30, 0.25);
     border-right: 1px dashed rgba(32, 33, 30, 0.25);
     transform: rotate(-2.5deg);
@@ -1676,7 +1676,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     background: #f0e9ff !important;
 }
 #theme-field-notes #notion-article .notion-callout:nth-child(even)::before {
-    background: rgba(217, 255, 47, 0.85);
+    background: rgba(245, 223, 77, 0.85);
     transform: rotate(2deg);
 }
 #theme-field-notes #notion-article .notion-callout:nth-child(even)::after {
@@ -1732,7 +1732,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     height: 2px;
     background: repeating-linear-gradient(
         90deg,
-        rgba(43, 59, 255, 0.55) 0 7px,
+        rgba(102, 103, 171, 0.55) 0 7px,
         transparent 7px 11px
       );
 }
@@ -1828,7 +1828,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     width: 88px;
     height: 20px;
     margin-left: -44px;
-    background: rgba(217, 255, 47, 0.78);
+    background: rgba(245, 223, 77, 0.78);
     border-left: 1px dashed rgba(32, 33, 30, 0.22);
     border-right: 1px dashed rgba(32, 33, 30, 0.22);
     transform: rotate(-3deg);
@@ -1885,7 +1885,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
       .notion-spacer
       + .notion-column
       figure.notion-asset-wrapper-image::before {
-    background: rgba(255, 77, 157, 0.8);
+    background: rgba(255, 111, 97, 0.8);
     transform: rotate(4deg);
 }
 #theme-field-notes

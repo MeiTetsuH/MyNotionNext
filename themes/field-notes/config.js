@@ -4,11 +4,11 @@
 const CONFIG = {
   THEME_NAME: 'field-notes',
   // Palette lives in style.js (:root tokens); these mirror it for reference
-  COLOR_BG: '#f0ece1',
-  COLOR_INK: '#0c0c0d',
-  COLOR_BLUE: '#2b3bff',
-  COLOR_ACID: '#d9ff2f',
-  COLOR_PINK: '#ff4d9d',
+  COLOR_BG: '#f0eee9',
+  COLOR_INK: '#17161a',
+  COLOR_BLUE: '#6667ab',
+  COLOR_ACID: '#f5df4d',
+  COLOR_PINK: '#ff6f61',
 
   // 菜单配置
   MENU_CATEGORY: true,

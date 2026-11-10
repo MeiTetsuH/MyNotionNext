@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
+// Each can sprays one of the theme tokens, so the cans follow the palette
 export const CANS = [
-  { id: 'ink', color: '#0c0c0d' },
-  { id: 'blue', color: '#2b3bff' },
-  { id: 'pink', color: '#ff4d9d' },
-  { id: 'white', color: '#fffdf6' }
+  { id: 'ink', token: '--ink' },
+  { id: 'blue', token: '--blue' },
+  { id: 'pink', token: '--pink' },
+  { id: 'white', token: '--card' }
 ]
 
 const RADIUS = 20
@@ -17,12 +18,16 @@ const MAX_DRIPS = 40
  */
 export const SprayWall = ({ labels }) => {
   const canvasRef = useRef(null)
-  const stateRef = useRef({ drawing: false, last: null, drips: [], raf: 0, color: CANS[0].color })
+  const stateRef = useRef({ drawing: false, last: null, drips: [], raf: 0, color: '#17161a' })
   const [can, setCan] = useState(CANS[0].id)
   const [dirty, setDirty] = useState(false)
 
   useEffect(() => {
-    stateRef.current.color = (CANS.find(c => c.id === can) || CANS[0]).color
+    const token = (CANS.find(c => c.id === can) || CANS[0]).token
+    const value = canvasRef.current
+      ? getComputedStyle(canvasRef.current).getPropertyValue(token).trim()
+      : ''
+    if (value) stateRef.current.color = value
   }, [can])
 
   // Keep the bitmap matched to the element, carrying the paint across resizes
@@ -176,7 +181,7 @@ export const SprayWall = ({ labels }) => {
               key={c.id}
               type='button'
               className='fn-can'
-              style={{ '--can': c.color }}
+              style={{ '--can': `var(${c.token})` }}
               aria-pressed={can === c.id}
               aria-label={c.id}
               onClick={() => setCan(c.id)}>
