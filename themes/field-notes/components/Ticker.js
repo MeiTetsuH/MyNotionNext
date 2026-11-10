@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 
 const WORDS = [
   'SMALL TOOLS',
@@ -29,12 +29,29 @@ const Tape = ({ tone }) => (
   </div>
 )
 
-/** Two lengths of barrier tape pulled across the page where the hero ends. */
-export const Ticker = () => (
-  <div className='fn-tapes' aria-hidden='true'>
-    <Tape tone='ink' />
-    <Tape tone='acid' />
-  </div>
-)
+/**
+ * Two lengths of barrier tape pulled across the page where the hero ends.
+ * The scroll only runs while the tapes are on screen.
+ */
+export const Ticker = () => {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver(([entry]) => {
+      el.classList.toggle('is-paused', !entry.isIntersecting)
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className='fn-tapes' aria-hidden='true'>
+      <Tape tone='ink' />
+      <Tape tone='acid' />
+    </div>
+  )
+}
 
 export default Ticker

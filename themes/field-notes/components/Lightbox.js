@@ -59,10 +59,10 @@ export const Lightbox = ({
   const [flipped, setFlipped] = useState(false)
   const [noteState, setNoteState] = useState({ key: '', lines: null })
 
-  // Every new print starts face up
+  // A print opens face up; paging keeps whichever side is showing
   useEffect(() => {
     setFlipped(false)
-  }, [open, mode, index, screen, projectIndex])
+  }, [open, mode, screen, projectIndex])
 
   const updateViewerRatio = useCallback(() => {
     const dialog = dialogRef.current
@@ -382,7 +382,19 @@ export const Lightbox = ({
         {caption && <p id='viewer-caption'>{caption}</p>}
         <div className='viewer-meta-row mono'>
           <span>{meta}</span>
-          <span id='viewer-index'>{indexText}</span>
+          <span className='viewer-pager'>
+            {showNav && (
+              <button type='button' aria-label={t('prev')} onClick={() => onStep(-1)}>
+                ←
+              </button>
+            )}
+            <span id='viewer-index'>{indexText}</span>
+            {showNav && (
+              <button type='button' aria-label={t('next')} onClick={() => onStep(1)}>
+                →
+              </button>
+            )}
+          </span>
         </div>
       </div>
     </dialog>

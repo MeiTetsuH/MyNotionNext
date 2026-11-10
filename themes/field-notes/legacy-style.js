@@ -23,7 +23,7 @@ export const LegacyStyle = () => (
 .now-art {
     position: relative;
     min-height: 340px;
-    border-right: 2px dashed #20211e60;
+    border-right: 2px dashed color-mix(in srgb,var(--ink) 38%,transparent);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -63,7 +63,7 @@ export const LegacyStyle = () => (
 }
 .now-tags span {
     font-size: 10px;
-    border: 1px solid #20211e70;
+    border: 1px solid color-mix(in srgb,var(--ink) 44%,transparent);
     padding: 2px 9px
 }
 html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
@@ -153,7 +153,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
         min-height: 0;
         padding: 45px 14px 12px;
         border-right: 0;
-        border-bottom: 2px dashed #20211e60
+        border-bottom: 2px dashed color-mix(in srgb,var(--ink) 38%,transparent)
     }
     .now-copy {
         padding: 26px 25px 28px
@@ -251,7 +251,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     font-size: 16px;
     line-height: 1.85;
     max-width: none;
-    color: #45463f
+    color: #44434a
 }
 #now .lab-chapters {
     list-style: none;
@@ -270,7 +270,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     font-size: 18px;
     font-weight: 700;
     line-height: 1.5;
-    color: #7551b5;
+    color: var(--blue);
     letter-spacing: .5px
 }
 #now .lab-chapters h3 {
@@ -282,7 +282,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 #now .lab-chapters p {
     font-size: 14px;
     line-height: 1.65;
-    color: #4c4d46;
+    color: #4b4a52;
     overflow-wrap: break-word
 }
 #now .lab-notebook {
@@ -306,10 +306,10 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     transition: background .15s,box-shadow .15s,padding .15s
 }
 #now .lab-notebook summary:hover {
-    background: #dfd2fb22
+    background: color-mix(in srgb,var(--blue) 13%,transparent)
 }
 #now .lab-notebook[open] summary {
-    background: #dfd2fb30;
+    background: color-mix(in srgb,var(--blue) 19%,transparent);
     border: 2px solid var(--purple);
     box-shadow: 3px 3px var(--ink);
     padding: 11px 14px;
@@ -334,7 +334,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 #now .lab-note-content p {
     font-size: 14px;
     line-height: 1.85;
-    color: #4c4d46;
+    color: #4b4a52;
     margin: 0
 }
 #now .lab-photo-flow {
@@ -455,7 +455,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     width: 100%;
     position: relative;
     background-color: #fffef8;
-    background-image: radial-gradient(#20211e22 1.1px,transparent 1.1px);
+    background-image: radial-gradient(color-mix(in srgb,var(--ink) 13%,transparent) 1.1px,transparent 1.1px);
     background-size: 13px 13px;
     border: var(--border);
     box-shadow: 6px 6px var(--ink);
@@ -503,11 +503,11 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     top: -12px;
     left: 14px;
     transform: rotate(-2deg);
-    background: var(--pink)d9;
-    border-left: 1px dashed #5d417345;
-    border-right: 1px dashed #5d417345;
+    background: color-mix(in srgb,var(--pink) 85%,transparent);
+    border-left: 1px dashed color-mix(in srgb,var(--ink) 27%,transparent);
+    border-right: 1px dashed color-mix(in srgb,var(--ink) 27%,transparent);
     padding: 3px 12px;
-    font: 800 10px/1.3 ui-monospace,Menlo,monospace;
+    font: 800 10px/1.3 var(--mono);
     letter-spacing: .8px;
     color: var(--ink);
     box-shadow: 2px 2px var(--ink);
@@ -546,6 +546,17 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-row.is-spread {
     justify-content: space-between
+}
+@container labart (max-width:380px) {
+    #now .lab-stack-wall .is-minor {
+        display: none!important
+    }
+    #now .lab-row {
+        justify-content: center!important
+    }
+    #now .lab-row+.lab-row {
+        margin-top: 0!important
+    }
 }
 #now .lab-row>li {
     --r: 0deg;
@@ -590,7 +601,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     transform: translateX(-50%) rotate(calc(var(--r)*-1));
     background: var(--ink);
     color: #fffef8;
-    font: 800 9px/1 ui-monospace,Menlo,monospace;
+    font: 800 9px/1 var(--mono);
     padding: 3px 6px;
     white-space: nowrap;
     opacity: 0;
@@ -619,20 +630,20 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     width: 30px;
     height: 11px;
     transform: translateX(-50%) rotate(-2.5deg);
-    background: var(--pink)d9;
-    border-left: 1px dashed #5d417345;
-    border-right: 1px dashed #5d417345;
+    background: color-mix(in srgb,var(--pink) 85%,transparent);
+    border-left: 1px dashed color-mix(in srgb,var(--ink) 27%,transparent);
+    border-right: 1px dashed color-mix(in srgb,var(--ink) 27%,transparent);
     box-shadow: 0 1px 2px rgba(0,0,0,.06);
     pointer-events: none;
 }
 #now .lab-tape {
     padding: 5px 14px;
     margin: 0 3px;
-    font: 800 calc(var(--note-fs) - 2px)/1.2 ui-monospace,Menlo,monospace;
+    font: 800 calc(var(--note-fs) - 2px)/1.2 var(--mono);
     color: var(--ink);
     white-space: nowrap;
     cursor: default;
-    border: 1px solid rgba(32,33,30,.2);
+    border: 1px solid color-mix(in srgb,var(--ink) 20%,transparent);
     filter: drop-shadow(1.5px 2px 0 var(--ink));
     clip-path: polygon(0 0,100% 0,97% 25%,100% 50%,97% 75%,100% 100%,0 100%,3% 75%,0 50%,3% 25%);
 }
@@ -640,13 +651,13 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     background: repeating-linear-gradient(135deg,#bfe0ff 0 6px,#d9eeff 6px 12px)
 }
 #now .lab-tape-yellow {
-    background: repeating-linear-gradient(135deg,#e3fb96 0 6px,#f2fdc5 6px 12px)
+    background: repeating-linear-gradient(135deg,color-mix(in srgb,var(--acid) 60%,var(--card)) 0 6px,color-mix(in srgb,var(--acid) 38%,var(--card)) 6px 12px)
 }
 #now .lab-tape-purple {
-    background: repeating-linear-gradient(135deg,#e0d4fc 0 6px,#f0eaff 6px 12px)
+    background: repeating-linear-gradient(135deg,color-mix(in srgb,var(--blue) 26%,var(--card)) 0 6px,color-mix(in srgb,var(--blue) 14%,var(--card)) 6px 12px)
 }
 #now .lab-stamp {
-    --c: #d9402f;
+    --c: var(--red);
     width: calc(var(--u)*1.35);
     aspect-ratio: 1;
     color: var(--c);
@@ -662,7 +673,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     overflow: visible
 }
 #now .lab-stamp text {
-    font-family: ui-monospace,Menlo,monospace;
+    font-family: var(--mono);
     font-weight: 800
 }
 #now .lab-stamp .lab-stamp-big {
@@ -670,7 +681,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     letter-spacing: .5px
 }
 #now .lab-stamp-red {
-    --c: #d9402f
+    --c: var(--red)
 }
 #now .lab-stamp-green {
     --c: #1e9e54
@@ -833,7 +844,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-tunnel {
     fill: none;
-    stroke: #2b2c27;
+    stroke: #2a292f;
     stroke-width: 2;
     stroke-dasharray: 2 7;
     stroke-linecap: round;
@@ -842,7 +853,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-tunnel-head {
     fill: none;
-    stroke: #2b2c27;
+    stroke: #2a292f;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -891,7 +902,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-callout span {
     font-size: 11px;
-    color: #4c4d46;
+    color: #4b4a52;
 }
 #now .lab-art {
     justify-content: space-between;
@@ -900,7 +911,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     background: #fff1e0;
 }
 #now .lab-callout-muse {
-    background: #f3e8ff;
+    background: color-mix(in srgb,var(--blue) 14%,var(--card));
 }
 #now .lab-callout-cable {
     background: #fff3a8;
@@ -931,6 +942,15 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 #now .now-paper.is-notebook-open .lab-art-strip,
       #now .now-paper:has(.lab-notebook[open]) .lab-art-strip {
     display: none;
+}
+@container labart (max-width: 380px) {
+    #now .lab-callout.is-minor,
+        #now .lab-leader.is-minor {
+        display: none;
+    }
+    #now .lab-art-strip {
+        --u: 36px;
+    }
 }
 @media (max-width: 720px) {
     #now .lab-figure {
@@ -1014,7 +1034,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-overlay text,
     #now .lab-ruler text {
-    font-family: 'SFMono-Regular', Menlo, Consolas, 'PingFang SC', 'Hiragino Sans', monospace;
+    font-family: var(--mono);
 }
 #now .lab-ruler {
     display: block;
@@ -1033,7 +1053,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-term .lab-term-line {
     font-size: 19px;
-    fill: #d9dad2;
+    fill: #dad9de;
 }
 #now .lab-term .lab-term-count {
     font-size: 66px;
@@ -1049,7 +1069,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-term .lab-term-foot {
     font-size: 20px;
-    fill: #a9aaa2;
+    fill: #a9a8b0;
 }
 #now .lab-led-ring {
     fill: none;
@@ -1099,7 +1119,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-hotspot:hover,
     #now .lab-hotspot:focus-visible {
-    border-color: rgba(32, 33, 30, 0.55);
+    border-color: color-mix(in srgb,var(--ink) 55%,transparent);
     background: rgba(255, 253, 245, 0.18);
     outline: none;
 }
@@ -1122,10 +1142,10 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 #now .lab-ruler-title {
     font-size: 12px;
     letter-spacing: 1.5px;
-    fill: #2f3a12;
+    fill: var(--ink);
 }
 #now .lab-ruler-base {
-    stroke: rgba(32, 33, 30, 0.22);
+    stroke: color-mix(in srgb,var(--ink) 22%,transparent);
     stroke-width: 4;
     stroke-linecap: round;
 }
@@ -1145,7 +1165,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
 }
 #now .lab-ruler-hour {
     font-size: 11.5px;
-    fill: #2f3a12;
+    fill: var(--ink);
 }
 #now .lab-ruler-trend {
     fill: #fffdf5;
@@ -1153,8 +1173,8 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     stroke-width: 1.6;
 }
 #now .lab-ruler-trend.is-past {
-    fill: #8f9187;
-    stroke: #8f9187;
+    fill: #8e8d96;
+    stroke: #8e8d96;
 }
 #now .lab-ruler-group rect {
     fill: #fffdf5;
@@ -1162,7 +1182,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     stroke-width: 2.2;
 }
 #now .lab-ruler-group.is-muse rect {
-    fill: #b19aea;
+    fill: var(--pink);
 }
 #now .lab-ruler-leader {
     stroke: var(--ink);
@@ -1175,15 +1195,15 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     fill: var(--ink);
 }
 #now .lab-ruler-group.is-past rect {
-    fill: #d8d9cf;
-    stroke: #8f9187;
+    fill: #d9d8dd;
+    stroke: #8e8d96;
 }
 #now .lab-ruler-group.is-past .lab-ruler-label {
-    fill: #5d6b2a;
+    fill: var(--muted);
     font-weight: 500;
 }
 #now .lab-ruler-group.is-past .lab-ruler-leader {
-    stroke: #8f9187;
+    stroke: #8e8d96;
 }
 #now .lab-ruler-group.is-busy rect {
     fill: #fffdf5;
@@ -1191,12 +1211,12 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     animation: labBusy 1.2s ease-in-out infinite;
 }
 #now .lab-ruler-now line {
-    stroke: #d9402f;
+    stroke: var(--red);
     stroke-width: 3;
     stroke-linecap: round;
 }
 #now .lab-ruler-now rect {
-    fill: #d9402f;
+    fill: var(--red);
 }
 #now .lab-ruler-now text {
     font-size: 10px;
@@ -1238,7 +1258,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     margin: 26px 0 0;
     padding: 18px 18px 16px;
     background: #fffef8;
-    border: 2px dashed rgba(32, 33, 30, 0.45);
+    border: 2px dashed color-mix(in srgb,var(--ink) 45%,transparent);
     transform: rotate(-0.4deg);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1269,7 +1289,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     width: 86px;
     height: 20px;
     margin-left: -43px;
-    background: rgba(255, 111, 97, 0.85);
+    background: color-mix(in srgb,var(--pink) 85%,transparent);
     transform: rotate(-3deg);
 }
 #now .lab-note-card strong {
@@ -1281,7 +1301,7 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     margin: 0;
     font-size: 14px;
     line-height: 1.8;
-    color: #3b3c36;
+    color: #39383f;
 }
 #now .lab-note-card .lab-note-hint {
     font-family: var(--hand);
@@ -1353,12 +1373,12 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
       html.dark #theme-field-notes,
       html.dark #theme-field-notes .notion {
     --fg-color: var(--ink) !important;
-    --fg-color-0: rgba(32, 33, 30, 0.09) !important;
-    --fg-color-1: rgba(32, 33, 30, 0.16) !important;
-    --fg-color-2: rgba(32, 33, 30, 0.42) !important;
-    --fg-color-3: rgba(32, 33, 30, 0.68) !important;
+    --fg-color-0: color-mix(in srgb,var(--ink) 9%,transparent) !important;
+    --fg-color-1: color-mix(in srgb,var(--ink) 16%,transparent) !important;
+    --fg-color-2: color-mix(in srgb,var(--ink) 42%,transparent) !important;
+    --fg-color-3: color-mix(in srgb,var(--ink) 68%,transparent) !important;
     --fg-color-4: var(--ink) !important;
-    --fg-color-6: rgba(32, 33, 30, 0.85) !important;
+    --fg-color-6: color-mix(in srgb,var(--ink) 85%,transparent) !important;
     --fg-color-icon: var(--ink) !important;
     --bg-color: #fffdf5 !important;
     --bg-color-0: rgba(135, 131, 120, 0.14) !important;
@@ -1379,7 +1399,7 @@ html.dark #theme-field-notes .notion,
 }
 html.dark #theme-field-notes .notion-asset-caption,
       html.dark #theme-field-notes .notion-bookmark .notion-bookmark-description {
-    color: #616259 !important;
+    color: var(--muted) !important;
 }
 html.dark #theme-field-notes .notion-table-of-contents {
     background: var(--bone) !important;
@@ -1418,7 +1438,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
 }
 #theme-field-notes #notion-article figure.notion-asset-wrapper-image .notion-asset-caption {
     padding: 10px 4px 0;
-    font-family: "SFMono-Regular", Consolas, monospace;
+    font-family: var(--mono);
     font-size: 11px;
     color: var(--muted);
 }
@@ -1526,7 +1546,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     left: calc(50% - 40px);
     width: 80px;
     height: 20px;
-    background: var(--acid);
+    background: color-mix(in srgb,var(--acid) 82%,transparent);
     transform: rotate(-2deg);
 }
 .article-toc-title {
@@ -1539,7 +1559,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     list-style: none;
     margin: 0;
     padding: 0;
-    border-left: 2px solid #20211e1f;
+    border-left: 2px solid color-mix(in srgb,var(--ink) 12%,transparent);
 }
 .article-toc li a {
     display: block;
@@ -1595,7 +1615,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     font-weight: 700;
 }
 #theme-field-notes #notion-article .notion-inline-code {
-    background: #efffc2 !important;
+    background: color-mix(in srgb,var(--acid) 38%,var(--card)) !important;
     color: var(--ink) !important;
     border: 1px solid var(--ink);
     border-radius: 0 !important;
@@ -1624,7 +1644,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
 #theme-field-notes #notion-article .notion-h3 .notion-h-title {
     background: linear-gradient(
         transparent 70%,
-        rgba(255, 111, 97, 0.55) 70%
+        color-mix(in srgb,var(--pink) 55%,transparent) 70%
       );
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
@@ -1632,7 +1652,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
 #theme-field-notes #notion-article .notion-h4 .notion-h-title::before {
     content: '↳ ';
     color: var(--blue);
-    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-family: var(--mono);
 }
 #theme-field-notes #notion-article .notion-callout {
     position: relative;
@@ -1651,9 +1671,9 @@ html.dark #theme-field-notes .notion-table-of-contents {
     width: 104px;
     height: 22px;
     margin-left: -52px;
-    background: rgba(255, 111, 97, 0.78);
-    border-left: 1px dashed rgba(32, 33, 30, 0.25);
-    border-right: 1px dashed rgba(32, 33, 30, 0.25);
+    background: color-mix(in srgb,var(--pink) 78%,transparent);
+    border-left: 1px dashed color-mix(in srgb,var(--ink) 25%,transparent);
+    border-right: 1px dashed color-mix(in srgb,var(--ink) 25%,transparent);
     transform: rotate(-2.5deg);
 }
 #theme-field-notes #notion-article .notion-callout::after {
@@ -1673,14 +1693,14 @@ html.dark #theme-field-notes .notion-table-of-contents {
     border-top: 2px solid var(--ink);
 }
 #theme-field-notes #notion-article .notion-callout:nth-child(even) {
-    background: #f0e9ff !important;
+    background: color-mix(in srgb,var(--blue) 14%,var(--card)) !important;
 }
 #theme-field-notes #notion-article .notion-callout:nth-child(even)::before {
-    background: rgba(245, 223, 77, 0.85);
+    background: color-mix(in srgb,var(--acid) 85%,transparent);
     transform: rotate(2deg);
 }
 #theme-field-notes #notion-article .notion-callout:nth-child(even)::after {
-    background: linear-gradient(135deg, #d9cdf5 0 50%, #fffdf5 50%);
+    background: linear-gradient(135deg, color-mix(in srgb,var(--pink) 35%,var(--card)) 0 50%, #fffdf5 50%);
 }
 #theme-field-notes #notion-article .notion-callout .notion-page-icon-inline {
     flex: 0 0 auto;
@@ -1719,7 +1739,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     position: absolute;
     left: 2px;
     top: 4px;
-    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-family: var(--mono);
     font-size: 18px;
     color: var(--ink);
 }
@@ -1732,7 +1752,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     height: 2px;
     background: repeating-linear-gradient(
         90deg,
-        rgba(102, 103, 171, 0.55) 0 7px,
+        color-mix(in srgb,var(--blue) 55%,transparent) 0 7px,
         transparent 7px 11px
       );
 }
@@ -1756,7 +1776,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     background: var(--green);
     color: var(--ink);
     border-bottom: 2px solid var(--ink);
-    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-family: var(--mono);
     font-size: 11px;
     letter-spacing: 0.06em;
     white-space: pre;
@@ -1777,8 +1797,8 @@ html.dark #theme-field-notes .notion-table-of-contents {
 }
 #theme-field-notes #notion-article .notion-simple-table td {
     border: 0 !important;
-    border-right: 1px solid rgba(32, 33, 30, 0.55) !important;
-    border-bottom: 1px solid rgba(32, 33, 30, 0.55) !important;
+    border-right: 1px solid color-mix(in srgb,var(--ink) 55%,transparent) !important;
+    border-bottom: 1px solid color-mix(in srgb,var(--ink) 55%,transparent) !important;
     padding: 12px 14px !important;
     vertical-align: top;
     min-width: 150px;
@@ -1797,7 +1817,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
       tr:first-child
       td {
     background: var(--green) !important;
-    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-family: var(--mono);
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -1813,7 +1833,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
       .notion-simple-table
       tr:nth-child(even)
       td {
-    background: rgba(245, 242, 233, 0.7);
+    background: color-mix(in srgb,var(--bone) 70%,transparent);
 }
 #theme-field-notes #notion-article figure.notion-asset-wrapper-image {
     position: relative;
@@ -1828,9 +1848,9 @@ html.dark #theme-field-notes .notion-table-of-contents {
     width: 88px;
     height: 20px;
     margin-left: -44px;
-    background: rgba(245, 223, 77, 0.78);
-    border-left: 1px dashed rgba(32, 33, 30, 0.22);
-    border-right: 1px dashed rgba(32, 33, 30, 0.22);
+    background: color-mix(in srgb,var(--acid) 78%,transparent);
+    border-left: 1px dashed color-mix(in srgb,var(--ink) 22%,transparent);
+    border-right: 1px dashed color-mix(in srgb,var(--ink) 22%,transparent);
     transform: rotate(-3deg);
     pointer-events: none;
 }
@@ -1885,7 +1905,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
       .notion-spacer
       + .notion-column
       figure.notion-asset-wrapper-image::before {
-    background: rgba(255, 111, 97, 0.8);
+    background: color-mix(in srgb,var(--pink) 80%,transparent);
     transform: rotate(4deg);
 }
 #theme-field-notes
@@ -1947,7 +1967,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     display: inline-block;
     width: 11px;
     height: 14px;
-    background: linear-gradient(var(--green) 0 3px, #3a3b35 3px 11px, var(--green) 11px);
+    background: linear-gradient(var(--green) 0 3px, #39383f 3px 11px, var(--green) 11px);
     border: 1.5px solid var(--green);
     border-radius: 2px;
 }
@@ -1962,7 +1982,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
 #theme-field-notes .film-strip {
     position: relative;
     padding: 22px 18px 16px;
-    background: #1c1c19;
+    background: #1b1a1f;
     border: 2px solid var(--ink);
     box-shadow: 6px 6px var(--purple);
     transform: rotate(var(--tilt, 0deg));
@@ -2012,7 +2032,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     width: 100%;
     padding: 0;
     border: 0;
-    background: #0d0d0b;
+    background: #0d0c0f;
     aspect-ratio: 3 / 2;
     height: auto;
     min-height: 0;
@@ -2035,8 +2055,8 @@ html.dark #theme-field-notes .notion-table-of-contents {
     content: '';
     display: block;
     aspect-ratio: 3 / 2;
-    background: #262622;
-    border: 1px dashed #45463f;
+    background: #252429;
+    border: 1px dashed #44434a;
 }
 #theme-field-notes .film-frame-no {
     display: flex;
@@ -2063,7 +2083,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     width: 124%;
     height: 132%;
     fill: none;
-    stroke: #e5352b;
+    stroke: var(--red);
     stroke-width: 3.2;
     stroke-linecap: round;
     stroke-dasharray: 1;

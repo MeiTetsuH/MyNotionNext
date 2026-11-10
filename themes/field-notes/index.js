@@ -29,7 +29,6 @@ import { Closing, Footer } from './components/Footer'
 import { Lightbox } from './components/Lightbox'
 import { ArticleToc } from './components/ArticleToc'
 import { ContactSheet } from './components/ContactSheet'
-import { GraffitiDefs } from './components/Graffiti'
 import { PhotoRail, PhotoStrip } from './components/PhotoRail'
 import { Poster } from './components/Poster'
 import { SectionHead } from './components/SectionHead'
@@ -57,8 +56,19 @@ import {
 export const FieldNotesContext = createContext()
 export const useFieldNotes = () => useContext(FieldNotesContext)
 
-const FONT_URL =
-  'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Ma+Shan+Zheng&family=Noto+Sans+JP:wght@900&family=Noto+Sans+SC:wght@900&family=Permanent+Marker&family=Rubik+Spray+Paint&family=Yusei+Magic&display=swap'
+// Type: one Latin family for display, UI and English body, a mono for every
+// label, Source Han (Noto) for CJK headings and UI, and a hard-pen hand per
+// language that shares a skeleton (Klee One, and LXGW WenKai which is built
+// on it). CJK families are ~100 @font-face rules each, so only the current
+// language's pair is requested.
+const FONT_API = 'https://fonts.googleapis.com/css2?'
+const FONT_BASE =
+  'family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@500;700&family=Rubik+Spray+Paint'
+const FONT_BY_LANG = {
+  zh: 'family=LXGW+WenKai+TC:wght@700&family=Noto+Sans+SC:wght@700..900',
+  ja: 'family=Klee+One:wght@600&family=Noto+Sans+JP:wght@700..900',
+  en: 'family=Caveat:wght@700'
+}
 
 /**
  * Inner base layout: language context, Notion data split into sections,
@@ -313,12 +323,17 @@ const LayoutBaseInner = props => {
         <link rel='preconnect' href='https://fonts.googleapis.com' />
         <link rel='preconnect' href='https://fonts.gstatic.com' crossOrigin='anonymous' />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link rel='stylesheet' href={FONT_URL} />
+        <link key='fn-font-base' rel='stylesheet' href={`${FONT_API}${FONT_BASE}&display=swap`} />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          key='fn-font-lang'
+          rel='stylesheet'
+          href={`${FONT_API}${FONT_BY_LANG[lang] || FONT_BY_LANG.zh}&display=swap`}
+        />
       </Head>
       <div id='theme-field-notes'>
         <LegacyStyle />
         <Style />
-        <GraffitiDefs />
 
         {/* Film strip down the left edge with the photo roll clipped to it */}
         <PhotoRail
