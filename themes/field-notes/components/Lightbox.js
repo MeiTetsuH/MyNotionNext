@@ -265,7 +265,7 @@ export const Lightbox = ({
         />
         {back && (
           <div className='viewer-back' aria-hidden={!flipped}>
-            <span className='viewer-back-stamp mono'>
+            <span className='viewer-back-stamp'>
               FIELD NOTES
               <br />
               No. {back.no}
@@ -344,7 +344,7 @@ export const Lightbox = ({
             <div className='viewer-action'>
               <button
                 type='button'
-                className='button ink viewer-link-btn viewer-flip-btn'
+                className='fn-btn fn-btn--sm viewer-flip-btn'
                 aria-pressed={flipped}
                 onClick={() => setFlipped(f => !f)}
               >
@@ -358,7 +358,7 @@ export const Lightbox = ({
                 {isExtLink ? (
                   <a
                     href={articleLink}
-                    className='button ink viewer-link-btn'
+                    className='fn-btn fn-btn--sm'
                     onClick={onClose}
                     target='_blank'
                     rel='noopener noreferrer'
@@ -368,7 +368,7 @@ export const Lightbox = ({
                 ) : (
                   <Link
                     href={articleLink}
-                    className='button ink viewer-link-btn'
+                    className='fn-btn fn-btn--sm'
                     onClick={onClose}
                   >
                     <span>{t('viewNoteLink')}</span>

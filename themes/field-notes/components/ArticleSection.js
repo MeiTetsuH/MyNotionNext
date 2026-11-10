@@ -1,11 +1,19 @@
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useLang } from './LangContext'
-import { RisoCover } from './RisoCover'
+import { Poster } from './Poster'
+import { SectionHead } from './SectionHead'
 import { localizeCategory, localizeTag } from '../data'
 
 // Home shows one featured note plus a single full row; the rest live in the archive
 const HOME_GRID_LIMIT = 3
+
+const hrefOf = post => post.href || `/${post.slug || post.id}`
+const dateOf = post =>
+  post.formattedDate || post?.date?.start_date || post?.publishDay || ''
+const coverOf = post => post.pageCoverThumbnail || post.pageCover || ''
+const tagNames = (post, lang) =>
+  (post.displayTags || []).map(tag => localizeTag(tag, lang))
 
 export const ArticleSection = ({ posts = [] }) => {
   const { lang, t } = useLang()
@@ -27,250 +35,120 @@ export const ArticleSection = ({ posts = [] }) => {
     return posts.filter(p => (p.category || '随笔') === activeCategory)
   }, [posts, activeCategory])
 
-  const featuredPost = filteredPosts.length > 0 ? filteredPosts[0] : null
-  const gridPosts =
-    filteredPosts.length > 1 ? filteredPosts.slice(1, 1 + HOME_GRID_LIMIT) : []
+  const featured = filteredPosts[0] || null
+  const gridPosts = filteredPosts.slice(1, 1 + HOME_GRID_LIMIT)
+  const allLabel = t('filterAll')?.split('/')[0]?.trim() || '全部'
 
   return (
-    <section
-      className='articles-section wrap'
-      id='notes'
-      aria-labelledby='articles-title'
-    >
-      <div id='articles' style={{ position: 'relative', top: '-20px' }}></div>
-      <div className='section-heading'>
-        <div>
-          <span className='eyebrow mono'>02 / FIELD NOTES & WRITINGS</span>
-          <h2 id='articles-title'>{t('notesTitle')}</h2>
-        </div>
-        <span className='margin-note'>{t('notesNote')}</span>
-      </div>
+    <section className='fn-notes' id='notes' aria-labelledby='articles-title'>
+      <div className='wrap'>
+        <span id='articles' className='fn-anchor' />
+        <SectionHead
+          no='02'
+          eyebrow='FIELD NOTES & WRITINGS'
+          title={t('notesTitle')}
+          titleId='articles-title'
+          note={t('notesNote')}
+        />
 
-      {/* 和纸胶带 / 分类筛选工具栏 */}
-      {categories.length > 0 && (
-        <div
-          className='filters'
-          style={{
-            marginBottom: '28px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '10px'
-          }}
-        >
-          <button
-            type='button'
-            className={`mono ${activeCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('all')}
-            style={{
-              border: 'var(--border)',
-              padding: '6px 14px',
-              fontWeight: 700,
-              background: activeCategory === 'all' ? 'var(--ink)' : 'var(--paper)',
-              color: activeCategory === 'all' ? 'var(--paper)' : 'var(--ink)',
-              boxShadow: activeCategory === 'all' ? '3px 3px var(--purple)' : '2px 2px var(--ink)',
-              cursor: 'pointer'
-            }}
-          >
-            {t('filterAll')?.split('/')[0] || '全部'} / {posts.length}
-          </button>
-          {categories.map(([catKey, { label, count }]) => (
+        {categories.length > 0 && (
+          <div className='fn-chips' role='toolbar' aria-label={t('category')}>
             <button
-              key={catKey}
               type='button'
-              className={`mono ${activeCategory === catKey ? 'active' : ''}`}
-              onClick={() => setActiveCategory(catKey)}
-              style={{
-                border: 'var(--border)',
-                padding: '6px 14px',
-                fontWeight: 700,
-                background: activeCategory === catKey ? 'var(--ink)' : 'var(--paper)',
-                color: activeCategory === catKey ? 'var(--paper)' : 'var(--ink)',
-                boxShadow: activeCategory === catKey ? '3px 3px var(--purple)' : '2px 2px var(--ink)',
-                cursor: 'pointer'
-              }}
-            >
-              {label} / {count}
+              className='fn-chip'
+              aria-pressed={activeCategory === 'all'}
+              onClick={() => setActiveCategory('all')}>
+              {allLabel} <b>{posts.length}</b>
             </button>
-          ))}
-        </div>
-      )}
+            {categories.map(([catKey, { label, count }]) => (
+              <button
+                key={catKey}
+                type='button'
+                className='fn-chip'
+                aria-pressed={activeCategory === catKey}
+                onClick={() => setActiveCategory(catKey)}>
+                {label} <b>{count}</b>
+              </button>
+            ))}
+          </div>
+        )}
 
-      {filteredPosts.length === 0 ? (
-        <p className='mono' style={{ padding: '30px 0', color: 'var(--muted)' }}>
-          {t('noPosts')}
-        </p>
-      ) : (
-        <>
-          {/* Featured Field Note: Tactile Paper Layout */}
-          {featuredPost && (
-            <article className='featured-note-paper'>
-              <div className='featured-note-copy'>
-                <div className='featured-note-top mono'>
-                  <span className='small-tag'>LATEST NOTE — 001</span>
-                  {(featuredPost.localizedCategory || featuredPost.category) && (
-                    <span className='article-card-category'>
-                      {featuredPost.localizedCategory || featuredPost.category}
+        {!featured ? (
+          <p className='fn-empty mono'>{t('noPosts')}</p>
+        ) : (
+          <>
+            <article className='fn-bill'>
+              <Link href={hrefOf(featured)} className='fn-bill-cover' tabIndex={-1} aria-hidden='true'>
+                {coverOf(featured) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coverOf(featured)} alt='' loading='lazy' />
+                ) : (
+                  <span className='fn-bill-icon'>{featured.pageIcon || '✎'}</span>
+                )}
+                <span className='fn-bill-stamp'>LATEST</span>
+              </Link>
+
+              <div className='fn-bill-copy'>
+                <div className='fn-poster-meta'>
+                  {(featured.localizedCategory || featured.category) && (
+                    <span className='fn-chip-tag'>
+                      {featured.localizedCategory || featured.category}
                     </span>
                   )}
-                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#686960' }}>
-                    {featuredPost.formattedDate ||
-                      featuredPost?.date?.start_date ||
-                      featuredPost?.publishDay ||
-                      ''}
-                  </span>
+                  <span className='mono'>{dateOf(featured)}</span>
                 </div>
-
-                <Link href={featuredPost.href || `/${featuredPost.slug || featuredPost.id}`}>
-                  <h3>
-                    <span>{featuredPost.localizedTitle || featuredPost.title}</span>
-                    <span aria-hidden='true'> ↗</span>
-                  </h3>
-                </Link>
-
-                {(featuredPost.localizedSummary || featuredPost.summary) && (
-                  <p className='featured-note-summary'>
-                    {featuredPost.localizedSummary || featuredPost.summary}
-                  </p>
+                <h3>
+                  <Link href={hrefOf(featured)}>
+                    {featured.localizedTitle || featured.title}
+                  </Link>
+                </h3>
+                {(featured.localizedSummary || featured.summary) && (
+                  <p>{featured.localizedSummary || featured.summary}</p>
                 )}
-
-                {featuredPost.displayTags && featuredPost.displayTags.length > 0 && (
-                  <div className='note-memo-tags'>
-                    {featuredPost.displayTags.map(tag => (
-                      <span key={typeof tag === 'string' ? tag : tag.name} className='note-memo-tag'>
-                        #{localizeTag(tag, lang)}
-                      </span>
+                {tagNames(featured, lang).length > 0 && (
+                  <div className='fn-tags'>
+                    {tagNames(featured, lang).map(tag => (
+                      <span key={tag}>#{tag}</span>
                     ))}
                   </div>
                 )}
-
-                <div className='featured-note-actions'>
-                  <Link
-                    href={featuredPost.href || `/${featuredPost.slug || featuredPost.id}`}
-                    className='button ink'
-                  >
-                    <span>{t('readMore')}</span>
-                    <span aria-hidden='true'>↗</span>
-                  </Link>
-                </div>
-              </div>
-
-              <div className='featured-note-visual'>
-                <div className='window-bar'>
-                  <span className='window-dots'>● ● ●</span>
-                  <span className='mono'>FIELD NOTE / SNAPSHOT</span>
-                  <span>↗</span>
-                </div>
-                <Link
-                  href={featuredPost.href || `/${featuredPost.slug || featuredPost.id}`}
-                  style={{ display: 'block', overflow: 'hidden' }}
-                >
-                  {featuredPost.pageCoverThumbnail || featuredPost.pageCover ? (
-                    <RisoCover
-                      className='featured-note-cover'
-                      src={featuredPost.pageCoverThumbnail || featuredPost.pageCover}
-                      alt={featuredPost.localizedTitle || featuredPost.title || ''}
-                      loading='lazy'
-                    />
-                  ) : (
-                    <div
-                      className='featured-note-cover'
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '48px',
-                        background: '#f2f0e6'
-                      }}
-                    >
-                      {featuredPost.pageIcon || '📝'}
-                    </div>
-                  )}
+                <Link href={hrefOf(featured)} className='fn-btn'>
+                  <span>{t('readMore')}</span>
+                  <span aria-hidden='true'>↗</span>
                 </Link>
               </div>
             </article>
-          )}
 
-          {/* Grid of Note Memos with Washi Tape */}
-          {gridPosts.length > 0 && (
-            <div className='notes-memo-grid is-home'>
-              {gridPosts.map((post, idx) => {
-                const postDate =
-                  post.formattedDate ||
-                  post?.date?.start_date ||
-                  post?.publishDay ||
-                  ''
-                const href = post.href || `/${post.slug || post.id}`
+            {gridPosts.length > 0 && (
+              <div className='fn-posters'>
+                {gridPosts.map((post, idx) => (
+                  <Poster
+                    key={post.id || idx}
+                    href={hrefOf(post)}
+                    no={`#${String(idx + 2).padStart(2, '0')}`}
+                    category={post.localizedCategory || post.category || 'NOTE'}
+                    date={dateOf(post)}
+                    cover={coverOf(post)}
+                    title={post.localizedTitle || post.title}
+                    summary={post.localizedSummary || post.summary}
+                    tags={tagNames(post, lang)}
+                    cta={t('readMore')}
+                  />
+                ))}
+              </div>
+            )}
 
-                return (
-                  <Link key={post.id || idx} href={href} className='note-memo-card'>
-                    <div className='note-memo-tape' aria-hidden='true'></div>
-
-                    <div className='note-memo-header mono'>
-                      <span className='article-card-category'>
-                        {post.localizedCategory || post.category || 'NOTE'}
-                      </span>
-                      <span
-                        className='mono'
-                        style={{ fontSize: '11px', color: '#686960' }}
-                      >
-                        {postDate}
-                      </span>
-                    </div>
-
-                    {post.pageCoverThumbnail || post.pageCover ? (
-                      <RisoCover
-                        frameClassName='is-memo'
-                        className='note-memo-cover'
-                        src={post.pageCoverThumbnail || post.pageCover}
-                        alt={post.localizedTitle || post.title || ''}
-                        loading='lazy'
-                      />
-                    ) : null}
-
-                    <h3 className='note-memo-title'>
-                      {post.localizedTitle || post.title}
-                    </h3>
-
-                    {(post.localizedSummary || post.summary) && (
-                      <p className='note-memo-desc'>
-                        {post.localizedSummary || post.summary}
-                      </p>
-                    )}
-
-                    {post.displayTags && post.displayTags.length > 0 && (
-                      <div className='note-memo-tags'>
-                        {post.displayTags.map(tag => (
-                          <span
-                            key={typeof tag === 'string' ? tag : tag.name}
-                            className='note-memo-tag'
-                          >
-                            #{localizeTag(tag, lang)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className='note-memo-foot mono'>
-                      <span>{`NOTE #${String(idx + 2).padStart(2, '0')}`}</span>
-                      <span className='note-memo-arrow'>
-                        <span>{t('readMore')}</span>
-                        <span>↗</span>
-                      </span>
-                    </div>
-                  </Link>
-                )
-              })}
+            <div className='fn-more'>
+              <Link href='/archive' className='fn-btn fn-btn--paper'>
+                <span>{t('allNotes')}</span>
+                <span aria-hidden='true'>↗</span>
+              </Link>
             </div>
-          )}
-
-          <div className='article-action-bar'>
-            <Link href='/archive' className='button ink'>
-              <span>{t('allNotes')}</span>
-              <span aria-hidden='true'>↗</span>
-            </Link>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </section>
   )
 }
+
+export default ArticleSection

@@ -84,8 +84,8 @@ export const Header = ({ customMenu = [], onNavPhotos }) => {
       <a className='skip' href='#main'>
         {t('skip')}
       </a>
-      <header ref={headerRef} className='header wrap'>
-        <Link href='/' className='logo' aria-label='H.mz home' onClick={closeAll}>
+      <header ref={headerRef} className='fn-header wrap'>
+        <Link href='/' className='fn-logo' aria-label='H.mz home' onClick={closeAll}>
           H<span>✳</span>
         </Link>
         <span className='brand-note'>

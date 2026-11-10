@@ -655,4 +655,14 @@ for (const lang of ['zh', 'en', 'ja']) {
   };
 }
 
+// Wall redesign: spray wall and photo strip
+const wallCopy = {
+  zh: { wallHint: '这面墙可以涂，按住拖动。', wallWipe: '擦掉', stripLabel: '拍的照片' },
+  en: { wallHint: 'This wall takes paint. Press and drag.', wallWipe: 'Wipe', stripLabel: 'Photo roll' },
+  ja: { wallHint: 'この壁、描けます。押したままドラッグ。', wallWipe: '消す', stripLabel: '撮った写真' }
+}
+for (const lang of ['zh', 'en', 'ja']) {
+  translations[lang] = { ...translations[lang], ...wallCopy[lang] }
+}
+
 export { translations, edgeCopy, transitCopy };

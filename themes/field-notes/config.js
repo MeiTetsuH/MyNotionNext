@@ -3,10 +3,12 @@
  */
 const CONFIG = {
   THEME_NAME: 'field-notes',
-  COLOR_BG: '#f5f2e9',
-  COLOR_INK: '#20211e',
-  COLOR_GREEN: '#d2fc4b',
-  COLOR_PURPLE: '#b19aea',
+  // Palette lives in style.js (:root tokens); these mirror it for reference
+  COLOR_BG: '#f0ece1',
+  COLOR_INK: '#0c0c0d',
+  COLOR_BLUE: '#2b3bff',
+  COLOR_ACID: '#d9ff2f',
+  COLOR_PINK: '#ff4d9d',
 
   // 菜单配置
   MENU_CATEGORY: true,

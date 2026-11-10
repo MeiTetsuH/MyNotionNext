@@ -1,5 +1,6 @@
 import React from 'react'
 import { useLang } from './LangContext'
+import { SectionHead } from './SectionHead'
 
 const ROLL_SIZE = 36
 const FRAMES_PER_STRIP = 6
@@ -25,13 +26,11 @@ export const ContactSheet = ({ photos = [], onOpen }) => {
 
   return (
     <section className='contact-sheet' aria-label={t('contactEyebrow')}>
-      <div className='section-heading'>
-        <div>
-          <span className='eyebrow mono'>{t('contactEyebrow')}</span>
-          <h2>{fill(t('contactTitle'), shot)}</h2>
-        </div>
-        <span className='margin-note'>{t('contactNote')}</span>
-      </div>
+      <SectionHead
+        eyebrow={t('contactEyebrow')}
+        title={fill(t('contactTitle'), shot)}
+        note={t('contactNote')}
+      />
 
       <div className='contact-counter mono' aria-hidden='true'>
         <span className='film-can' />

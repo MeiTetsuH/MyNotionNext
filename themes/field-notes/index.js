@@ -28,9 +28,12 @@ import { WorkSection } from './components/WorkSection'
 import { Closing, Footer } from './components/Footer'
 import { Lightbox } from './components/Lightbox'
 import { ArticleToc } from './components/ArticleToc'
-import { RisoCover } from './components/RisoCover'
 import { ContactSheet } from './components/ContactSheet'
-import { NotebookStyle } from './notebook-style'
+import { GraffitiDefs } from './components/Graffiti'
+import { PhotoRail, PhotoStrip } from './components/PhotoRail'
+import { Poster } from './components/Poster'
+import { SectionHead } from './components/SectionHead'
+import { LegacyStyle } from './legacy-style'
 import { heroPhotos } from './components/constants'
 
 import {
@@ -54,9 +57,12 @@ import {
 export const FieldNotesContext = createContext()
 export const useFieldNotes = () => useContext(FieldNotesContext)
 
+const FONT_URL =
+  'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Ma+Shan+Zheng&family=Noto+Sans+JP:wght@900&family=Noto+Sans+SC:wght@900&family=Permanent+Marker&family=Rubik+Spray+Paint&family=Yusei+Magic&display=swap'
+
 /**
- * Inner base layout connecting LangContext, 4-way Notion data dispatch,
- * progressive left Polaroid rope, and global darkroom Lightbox.
+ * Inner base layout: language context, Notion data split into sections,
+ * the photo roll on the left and the shared print viewer.
  */
 const LayoutBaseInner = props => {
   const {
@@ -69,15 +75,7 @@ const LayoutBaseInner = props => {
   const { lang, changeLang, t } = useLang()
   const router = useRouter()
 
-  const isArticlePage =
-    router.pathname !== '/' &&
-    (router.pathname.includes('[prefix]') ||
-      router.pathname.includes('[slug]') ||
-      router.pathname.includes('archive') ||
-      router.pathname.includes('category') ||
-      router.pathname.includes('tag') ||
-      router.pathname.includes('search') ||
-      router.asPath.startsWith('/article/'))
+  const isHome = router.pathname === '/'
 
   const allPagesSource = useMemo(() => {
     const navList = Array.isArray(allNavPages) ? allNavPages : []
@@ -219,72 +217,12 @@ const LayoutBaseInner = props => {
     ]
   }, [allLocalizedItems, workProjectPages, lang, t])
 
-  // ==================== Progressive Polaroid Rope State ====================
-  const [ropeHighlight, setRopeHighlight] = useState(false)
-  const [scrollActiveIdx, setScrollActiveIdx] = useState(0)
-  const [hoveredIdx, setHoveredIdx] = useState(null)
-  const [mobileExpanded, setMobileExpanded] = useState(false)
-  const [isMobileViewport, setIsMobileViewport] = useState(false)
-  const lastExpandScrollYRef = useRef(0)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const mq = window.matchMedia('(max-width: 1024px)')
-    const syncViewport = () => {
-      const mobile = mq.matches
-      setIsMobileViewport(mobile)
-      if (!mobile) {
-        setMobileExpanded(false)
-      }
-    }
-    syncViewport()
-    if (mq.addEventListener) {
-      mq.addEventListener('change', syncViewport)
-      return () => mq.removeEventListener('change', syncViewport)
-    }
-    mq.addListener(syncViewport)
-    return () => mq.removeListener(syncViewport)
+  // ==================== Photo roll ====================
+  const [railAttention, setRailAttention] = useState(false)
+  const activePhotoRef = useRef(0)
+  const handleActivePhoto = useCallback(idx => {
+    activePhotoRef.current = idx
   }, [])
-
-  // Collapse mobile Polaroid when navigating between routes
-  useEffect(() => {
-    setMobileExpanded(false)
-    setHoveredIdx(null)
-  }, [router.asPath])
-
-  useEffect(() => {
-    if (!combinedPhotos.length) return
-    let ticking = false
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const docMax = Math.max(
-            1,
-            document.documentElement.scrollHeight - window.innerHeight
-          )
-          const progress = Math.min(1, Math.max(0, window.scrollY / docMax))
-          const targetIdx = Math.min(
-            combinedPhotos.length - 1,
-            Math.floor(progress * combinedPhotos.length)
-          )
-          setScrollActiveIdx(prev => (prev === targetIdx ? prev : targetIdx))
-
-          // Auto-tuck mobile Polaroid on real vertical scroll (>18px avoids iOS tap bounce jitter)
-          if (
-            window.innerWidth <= 1024 &&
-            Math.abs(window.scrollY - lastExpandScrollYRef.current) > 18
-          ) {
-            setMobileExpanded(false)
-          }
-          ticking = false
-        })
-        ticking = true
-      }
-    }
-    handleScroll()
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [combinedPhotos.length])
 
   // ==================== Lightbox Viewer State ====================
   const [viewerState, setViewerState] = useState({
@@ -295,16 +233,12 @@ const LayoutBaseInner = props => {
     projectIndex: 0
   })
 
-  const openViewer = (mode, index = 0, screen = 'share', projectIndex = 0) => {
-    setMobileExpanded(false)
-    setViewerState({
-      open: true,
-      mode,
-      index,
-      screen,
-      projectIndex
-    })
-  }
+  const openViewer = useCallback(
+    (mode, index = 0, screen = 'share', projectIndex = 0) => {
+      setViewerState({ open: true, mode, index, screen, projectIndex })
+    },
+    []
+  )
 
   const closeViewer = () => {
     setViewerState(prev => ({ ...prev, open: false }))
@@ -327,59 +261,24 @@ const LayoutBaseInner = props => {
     })
   }
 
-  const navHighlightTimerRef = useRef(null)
+  const attentionTimerRef = useRef(null)
   useEffect(() => {
     return () => {
-      if (navHighlightTimerRef.current) {
-        clearTimeout(navHighlightTimerRef.current)
-      }
+      if (attentionTimerRef.current) clearTimeout(attentionTimerRef.current)
     }
   }, [])
 
   const handleNavPhotosClick = () => {
-    setRopeHighlight(true)
-    if (navHighlightTimerRef.current) clearTimeout(navHighlightTimerRef.current)
-    navHighlightTimerRef.current = setTimeout(() => setRopeHighlight(false), 700)
-    openViewer('photo', scrollActiveIdx)
+    setRailAttention(true)
+    if (attentionTimerRef.current) clearTimeout(attentionTimerRef.current)
+    attentionTimerRef.current = setTimeout(() => setRailAttention(false), 700)
+    openViewer('photo', activePhotoRef.current)
   }
 
-  // Sliding window: 4 cards on desktop home (1 unfolded + 3 mini), 5 cards on mobile & quiet article mode
-  const windowSize = isMobileViewport || isArticlePage ? 5 : 4
-  const activeOffset = windowSize === 5 ? 2 : 1
-  const totalPhotos = combinedPhotos.length
-  const windowStart = Math.max(
-    0,
-    Math.min(
-      Math.max(0, totalPhotos - windowSize),
-      scrollActiveIdx - activeOffset
-    )
-  )
-  const visiblePhotos = combinedPhotos.slice(
-    windowStart,
-    windowStart + windowSize
-  )
-  const remainingBelow = Math.max(
-    0,
-    totalPhotos - (windowStart + visiblePhotos.length)
-  )
-
-  const handleMorePendantClick = e => {
-    e.stopPropagation()
-    if (remainingBelow > 0 && typeof window !== 'undefined') {
-      const docMax = document.documentElement.scrollHeight - window.innerHeight
-      if (docMax > 24 && window.scrollY < docMax - 12) {
-        window.scrollBy({
-          top: Math.max(260, Math.round(window.innerHeight * 0.65)),
-          behavior: 'smooth'
-        })
-        return
-      }
-      openViewer('photo', Math.min(totalPhotos - 1, windowStart + visiblePhotos.length))
-      return
-    }
-    // End of the rope: unroll the whole film as a contact sheet
+  const openPhoto = useCallback(idx => openViewer('photo', idx), [openViewer])
+  const openPhotoRoll = useCallback(() => {
     router.push(`/category/${encodeURIComponent('拍的照片')}`)
-  }
+  }, [router])
 
   const contextValue = useMemo(
     () => ({
@@ -391,7 +290,8 @@ const LayoutBaseInner = props => {
       homeLabPosts,
       notePosts,
       combinedProjects,
-      openViewer
+      openViewer,
+      openPhotoRoll
     }),
     [
       lang,
@@ -401,159 +301,44 @@ const LayoutBaseInner = props => {
       allLocalizedItems,
       homeLabPosts,
       notePosts,
-      combinedProjects
+      combinedProjects,
+      openViewer,
+      openPhotoRoll
     ]
   )
 
   return (
     <FieldNotesContext.Provider value={contextValue}>
+      <Head>
+        <link rel='preconnect' href='https://fonts.googleapis.com' />
+        <link rel='preconnect' href='https://fonts.gstatic.com' crossOrigin='anonymous' />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link rel='stylesheet' href={FONT_URL} />
+      </Head>
       <div id='theme-field-notes'>
+        <LegacyStyle />
         <Style />
-        <NotebookStyle />
+        <GraffitiDefs />
 
-        {/* Left progressive Polaroid rope (4-card sliding window on desktop & peeking corner on mobile) */}
-        <aside
-          className={`polaroid-rope-rail ${ropeHighlight ? 'rope-attention' : ''} ${mobileExpanded ? 'is-mobile-expanded' : ''} ${isArticlePage ? 'is-article-mode' : ''}`}
-          aria-label='Polaroid photo timeline rope'
-        >
-          <button
-            type='button'
-            className='rope-header-tag mono'
-            onClick={e => {
-              e.stopPropagation()
-              openViewer('photo', scrollActiveIdx)
-            }}
-          >
-            <span className='rope-film-can' aria-hidden='true' />
-            <span>
-              {String(scrollActiveIdx + 1).padStart(2, '0')}/
-              {String(totalPhotos).padStart(2, '0')}
-            </span>
-          </button>
+        {/* Film strip down the left edge with the photo roll clipped to it */}
+        <PhotoRail
+          photos={combinedPhotos}
+          quiet={!isHome}
+          attention={railAttention}
+          onOpen={openPhoto}
+          onActiveChange={handleActivePhoto}
+          onEnd={openPhotoRoll}
+        />
 
-          <div className='rope-viewport'>
-            <div className='rope-track'>
-              {visiblePhotos.map((photo, relIdx) => {
-                const absIdx = windowStart + relIdx
-                const isScrollActive = absIdx === scrollActiveIdx
-                const isUnfolded = isMobileViewport
-                  ? mobileExpanded && absIdx === (hoveredIdx ?? scrollActiveIdx)
-                  : isArticlePage
-                  ? hoveredIdx === absIdx
-                  : absIdx === (hoveredIdx !== null ? hoveredIdx : scrollActiveIdx)
-
-                const shortDate = String(photo.date || '')
-                  .replace(/^20/, '')
-                  .split('.')
-                  .slice(0, 2)
-                  .join('.')
-
-                return (
-                  <div
-                    key={photo.key || absIdx}
-                    className={`rope-node ${isScrollActive ? 'is-scroll-active' : ''} ${isUnfolded ? 'is-unfolded' : ''}`}
-                    onMouseEnter={() => {
-                      if (!isMobileViewport) setHoveredIdx(absIdx)
-                    }}
-                    onMouseLeave={() => {
-                      if (!isMobileViewport) setHoveredIdx(null)
-                    }}
-                  >
-                    <span className='rope-tick' aria-hidden='true' />
-                    <span className='rope-active-date mono' aria-hidden='true'>
-                      {shortDate || 'NOTE'}
-                    </span>
-
-                    <button
-                      type='button'
-                      className='rope-polaroid'
-                      aria-label={photo.title}
-                      onClick={e => {
-                        e.stopPropagation()
-                        if (isMobileViewport) {
-                          const alreadyUnfolded =
-                            mobileExpanded &&
-                            absIdx === (hoveredIdx ?? scrollActiveIdx)
-                          if (!alreadyUnfolded) {
-                            lastExpandScrollYRef.current = window.scrollY
-                            setHoveredIdx(absIdx)
-                            setMobileExpanded(true)
-                            return
-                          }
-                        }
-                        openViewer('photo', absIdx)
-                      }}
-                    >
-                      <span className='rope-tape' aria-hidden='true' />
-                      <div className='rope-img-wrap'>
-                        <img
-                          src={photo.thumbSrc}
-                          alt={photo.alt || ''}
-                          loading='lazy'
-                        />
-                      </div>
-                      <div className='rope-mini-bar mono'>
-                        <b>{String(absIdx + 1).padStart(2, '0')}</b>
-                        <span>{shortDate || 'NOTE'}</span>
-                      </div>
-                      <div className='rope-full-caption'>
-                        <strong>{photo.title}</strong>
-                        <span className='rope-sub mono'>
-                          <span>{photo.place || photo.date}</span>
-                          <span>↗</span>
-                        </span>
-                      </div>
-                    </button>
-                  </div>
-                )
-              })}
-
-              {totalPhotos > 0 && (
-                <button
-                  type='button'
-                  className='rope-more-pendant mono'
-                  onClick={handleMorePendantClick}
-                >
-                  {remainingBelow > 0 ? (
-                    <span>
-                      <span className='rope-more-word'>[ </span>↓ +{remainingBelow}
-                      <span className='rope-more-word'> MORE ]</span>
-                    </span>
-                  ) : (
-                    <span>
-                      <span className='rope-more-word'>[ </span>
-                      {totalPhotos}
-                      <span className='rope-more-word'> ALL</span> ↗
-                      <span className='rope-more-word'> ]</span>
-                    </span>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Right main content stage: quiet rope mode when reading articles */}
-        <div
-          className={`fieldnotes-shell ${isArticlePage ? 'is-reading-article' : ''}`}
-          onClick={() => {
-            if (mobileExpanded) {
-              setMobileExpanded(false)
-              setHoveredIdx(null)
-            }
-          }}
-        >
-          <Header
-            customMenu={customMenu}
-            onNavPhotos={handleNavPhotosClick}
-          />
+        <div className={`fn-shell ${isHome ? 'is-home' : 'is-inner'}`}>
+          <Header customMenu={customMenu} onNavPhotos={handleNavPhotosClick} />
 
           <main id='main'>{children}</main>
 
           <Footer />
         </div>
 
-        {/* Global darkroom Polaroid & project screenshot viewer */}
+        {/* Print viewer: polaroids flip, project screenshots just enlarge */}
         <Lightbox
           viewerState={viewerState}
           onClose={closeViewer}
@@ -581,7 +366,8 @@ const LayoutBase = props => {
  * Homepage Layout
  */
 const LayoutIndex = () => {
-  const { notePosts, combinedProjects, openViewer } = useFieldNotes()
+  const { t, notePosts, combinedProjects, combinedPhotos, openViewer, openPhotoRoll } =
+    useFieldNotes()
 
   const openHeroPhoto = idx => {
     openViewer('hero', idx)
@@ -595,6 +381,12 @@ const LayoutIndex = () => {
     <>
       <Hero onOpenHeroPhoto={openHeroPhoto} />
       <Ticker />
+      <PhotoStrip
+        photos={combinedPhotos}
+        label={t('stripLabel')}
+        onOpen={idx => openViewer('photo', idx)}
+        onEnd={openPhotoRoll}
+      />
       <NowSection />
       <ArticleSection posts={notePosts} />
       <WorkSection
@@ -606,8 +398,18 @@ const LayoutIndex = () => {
   )
 }
 
+/** Row above every inner page: way back on the left, a mono label on the right. */
+const Crumbs = ({ href = '/#notes', label, children }) => (
+  <div className='fn-crumbs'>
+    <Link href={href} className='fn-btn fn-btn--sm fn-btn--paper'>
+      <span>{label}</span>
+    </Link>
+    <span className='mono'>{children}</span>
+  </div>
+)
+
 /**
- * Polaroid Dossier Article Detail Component
+ * Article detail: one sheet pasted on the wall
  */
 const ArticleDetail = ({ post, lock, validPassword }) => {
   const { lang, changeLang, t, allLocalizedItems } = useContext(FieldNotesContext)
@@ -695,11 +497,11 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
 
   if (!post) {
     return (
-      <div className='article-stage wrap'>
-        <div className='article-paper'>
-          <div className='article-inner'>
+      <div className='fn-page wrap'>
+        <div className='fn-sheet'>
+          <div className='fn-sheet-head'>
             <h1>404 — NOT FOUND</h1>
-            <Link href='/' className='button ink' style={{ marginTop: 24 }}>
+            <Link href='/' className='fn-btn'>
               <span>{t('backToLab')}</span>
             </Link>
           </div>
@@ -726,113 +528,91 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
   }
 
   return (
-    <article className='article-stage wrap'>
+    <article className='fn-page wrap'>
       {displayTitle && (
         <Head>
           <title>{`${displayTitle} | H.mz`}</title>
         </Head>
       )}
-      <div className='article-top-bar'>
-        <Link href='/#notes' className='button ink'>
-          <span>{t('backToLab')}</span>
-        </Link>
-        <span className='mono'>
-          FIELD NOTES ARCHIVE{formattedDate ? ` // ${formattedDate}` : ''}
-        </span>
-      </div>
+      <Crumbs label={t('backToLab')}>
+        FIELD NOTES ARCHIVE{formattedDate ? ` // ${formattedDate}` : ''}
+      </Crumbs>
 
-      <div className='article-paper'>
-        <span className='article-paper-tape' aria-hidden='true' />
-
-        <div className='article-window-bar mono'>
-          <span>● ● ●</span>
-          <span>FIELD NOTE / SNAPSHOT &amp; DOSSIER</span>
-          <span>↗</span>
-        </div>
-
-        <div className='article-inner'>
-          <header className={`article-header ${coverImg ? 'has-cover' : ''}`}>
-            <div>
-              <div className='note-meta mono'>
-                {post.category && (
-                  <span className='note-cat'>
-                    {localizeCategory(post.category, lang)}
-                  </span>
-                )}
-                {formattedDate && (
-                  <span>
-                    {t('articlePublished')} {formattedDate}
-                  </span>
-                )}
-                {localizedResolution.hasMultiLangBlocks && (
-                  <span className='article-lang-pills' role='group' aria-label={t('langLabel')}>
-                    {langBadges
-                      .filter(b => localizedResolution.availableLangs.includes(b.code))
-                      .map(b => (
-                        <button
-                          key={b.code}
-                          type='button'
-                          className={
-                            localizedResolution.activeLang === b.code ? 'is-active' : ''
-                          }
-                          aria-pressed={localizedResolution.activeLang === b.code}
-                          onClick={() => changeLang(b.code)}
-                        >
-                          {b.label}
-                        </button>
-                      ))}
-                  </span>
-                )}
-                {localizedResolution.hasMultiLangBlocks &&
-                  localizedResolution.activeLang !== lang && (
-                    <span className='article-lang-fallback'>
-                      ({t('articleLangFallback')})
-                    </span>
-                  )}
-              </div>
-
-              <h1>{displayTitle}</h1>
-
-              {displaySummary && (
-                <p className='article-summary-quote'>{displaySummary}</p>
+      <div className='fn-sheet'>
+        <header className={`fn-sheet-head ${coverImg ? 'has-cover' : ''}`}>
+          <div className='fn-sheet-title'>
+            <div className='fn-poster-meta'>
+              {post.category && (
+                <Link
+                  href={`/category/${encodeURIComponent(post.category)}`}
+                  className='fn-chip-tag'>
+                  {localizeCategory(post.category, lang)}
+                </Link>
               )}
-
-              {hasPhotoMeta && (
-                <div className='article-photo-meta mono'>
-                  {[photoInfo.place, photoInfo.settings].filter(Boolean).join(' · ')}
-                </div>
+              {formattedDate && (
+                <span className='mono'>
+                  {t('articlePublished')} {formattedDate}
+                </span>
               )}
-
-              {cleanTags.length > 0 && (
-                <div className='note-meta mono' style={{ marginTop: 14 }}>
-                  {cleanTags.map(tag => {
-                    const tagName = typeof tag === 'string' ? tag : tag.name
-                    return (
-                      <Link
-                        key={tagName}
-                        href={`/tag/${encodeURIComponent(tagName)}`}
-                        className='note-tag'
-                      >
-                        #{localizeTag(tagName, lang)}
-                      </Link>
-                    )
-                  })}
-                </div>
+              {localizedResolution.hasMultiLangBlocks && (
+                <span className='fn-lang-pills' role='group' aria-label={t('langLabel')}>
+                  {langBadges
+                    .filter(b => localizedResolution.availableLangs.includes(b.code))
+                    .map(b => (
+                      <button
+                        key={b.code}
+                        type='button'
+                        aria-pressed={localizedResolution.activeLang === b.code}
+                        onClick={() => changeLang(b.code)}>
+                        {b.label}
+                      </button>
+                    ))}
+                </span>
               )}
+              {localizedResolution.hasMultiLangBlocks &&
+                localizedResolution.activeLang !== lang && (
+                  <span className='mono'>({t('articleLangFallback')})</span>
+                )}
             </div>
 
-            {coverImg && (
-              <div className='article-cover-polaroid'>
-                <span className='article-cover-tape' aria-hidden='true' />
-                <RisoCover src={coverImg} alt={displayTitle} />
-                <div className='article-cover-caption mono'>
-                  <span>FIG. COVER — SNAPSHOT</span>
-                  <span>{formattedDate || 'FIELD NOTE'}</span>
-                </div>
+            <h1>{displayTitle}</h1>
+
+            {displaySummary && <p className='fn-sheet-lede'>{displaySummary}</p>}
+
+            {hasPhotoMeta && (
+              <div className='fn-sheet-exif mono'>
+                {[photoInfo.place, photoInfo.settings].filter(Boolean).join(' · ')}
               </div>
             )}
-          </header>
 
+            {cleanTags.length > 0 && (
+              <div className='fn-tags'>
+                {cleanTags.map(tag => {
+                  const tagName = typeof tag === 'string' ? tag : tag.name
+                  return (
+                    <Link key={tagName} href={`/tag/${encodeURIComponent(tagName)}`}>
+                      #{localizeTag(tagName, lang)}
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {coverImg && (
+            <figure className='fn-sheet-cover'>
+              <span className='fn-gaffer' aria-hidden='true' />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={coverImg} alt={displayTitle} />
+              <figcaption className='mono'>
+                <span>FIG. COVER</span>
+                <span>{formattedDate || 'FIELD NOTE'}</span>
+              </figcaption>
+            </figure>
+          )}
+        </header>
+
+        <div className='fn-sheet-body'>
           <div className={`article-reading ${hasToc ? 'has-toc' : ''}`}>
             <div className='article-reading-main'>
               <div id='article-wrapper' className='article-body'>
@@ -867,23 +647,15 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
         </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 32,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
-      >
-        <Link href='/#notes' className='button ink'>
+      <div className='fn-page-end'>
+        <Link href='/#notes' className='fn-btn fn-btn--paper'>
           <span>{t('backToLab')}</span>
         </Link>
         <button
           type='button'
-          className='back-top'
+          className='fn-top'
           onClick={scrollToTop}
-          aria-label={t('backTop')}
-        >
+          aria-label={t('backTop')}>
           ↑
         </button>
       </div>
@@ -917,20 +689,17 @@ const LayoutPostList = props => {
   }, [posts, category, tag])
 
   const headingTitle = category
-    ? `${t('category')}: ${localizeCategory(category, lang)}`
+    ? localizeCategory(category, lang)
     : tag
     ? `#${localizeTag(tag, lang)}`
     : t('allNotes')
 
   if (isPhotoRoll) {
     return (
-      <div className='wrap' style={{ padding: '40px 0 80px' }}>
-        <div className='article-top-bar'>
-          <Link href='/' className='button ink'>
-            <span>{t('backToLab')}</span>
-          </Link>
-          <span className='mono'>CONTACT SHEET // {combinedPhotos.length} FRAMES</span>
-        </div>
+      <div className='fn-page wrap'>
+        <Crumbs href='/' label={t('backToLab')}>
+          CONTACT SHEET // {combinedPhotos.length} FRAMES
+        </Crumbs>
         <ContactSheet
           photos={combinedPhotos}
           onOpen={idx => openViewer && openViewer('photo', idx)}
@@ -940,87 +709,40 @@ const LayoutPostList = props => {
   }
 
   return (
-    <div className='wrap' style={{ padding: '40px 0 80px' }}>
-      <div className='article-top-bar'>
-        <Link href='/#notes' className='button ink'>
-          <span>{t('backToLab')}</span>
-        </Link>
-        <span className='mono'>NOTEBOOK ARCHIVE // {visiblePosts.length} NOTES</span>
-      </div>
+    <div className='fn-page wrap'>
+      <Crumbs label={t('backToLab')}>
+        NOTEBOOK ARCHIVE // {visiblePosts.length} NOTES
+      </Crumbs>
 
-      <div className='section-heading'>
-        <div>
-          <span className='eyebrow mono'>NOTEBOOK ARCHIVE</span>
-          <h2>{headingTitle}</h2>
-        </div>
-      </div>
+      <SectionHead
+        eyebrow={category ? t('category') : tag ? t('tags') : 'NOTEBOOK ARCHIVE'}
+        title={headingTitle}
+      />
 
-      <div className='notes-memo-grid' style={{ marginTop: '30px' }}>
+      <div className='fn-posters'>
         {visiblePosts.map((post, idx) => {
-          const postDate = formatNotionDate(post)
           const postSlug = post?.slug || post?.id
-          const href = post?.href || `/${postSlug}`
-          const cleanTags = filterDisplayTags(post.tags || post.tagItems)
-
           return (
-            <Link key={post.id || idx} href={href} className='note-memo-card'>
-              <div className='note-memo-tape' aria-hidden='true' />
-
-              <div className='note-memo-header mono'>
-                <span className='article-card-category'>
-                  {localizeCategory(post.category || 'NOTE', lang)}
-                </span>
-                <span
-                  className='mono'
-                  style={{ fontSize: '11px', color: '#686960' }}
-                >
-                  {postDate}
-                </span>
-              </div>
-
-              {post.pageCoverThumbnail || post.pageCover ? (
-                <RisoCover
-                  frameClassName='is-memo'
-                  className='note-memo-cover'
-                  src={post.pageCoverThumbnail || post.pageCover}
-                  alt={parseMultiLang(post.title || '', lang)}
-                  loading='lazy'
-                />
-              ) : null}
-
-              <h3 className='note-memo-title'>
-                {parseMultiLang(post.title, lang)}
-              </h3>
-
-              {post.summary && (
-                <p className='note-memo-desc'>
-                  {getPostSection(post) === 'photo'
+            <Poster
+              key={post.id || idx}
+              href={post?.href || `/${postSlug}`}
+              no={`#${String(idx + 1).padStart(2, '0')}`}
+              category={localizeCategory(post.category || 'NOTE', lang)}
+              date={formatNotionDate(post)}
+              cover={post.pageCoverThumbnail || post.pageCover}
+              title={parseMultiLang(post.title, lang)}
+              summary={
+                post.summary
+                  ? getPostSection(post) === 'photo'
                     ? formatPostSummary(post.summary, lang)
-                    : parseMultiLang(post.summary, lang)}
-                </p>
+                    : parseMultiLang(post.summary, lang)
+                  : ''
+              }
+              tags={filterDisplayTags(post.tags || post.tagItems).map(tg =>
+                localizeTag(typeof tg === 'string' ? tg : tg.name, lang)
               )}
-
-              {cleanTags.length > 0 && (
-                <div className='note-memo-tags'>
-                  {cleanTags.map(tg => {
-                    const tagName = typeof tg === 'string' ? tg : tg.name
-                    return (
-                      <span key={tagName} className='note-memo-tag'>
-                        #{localizeTag(tagName, lang)}
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-
-              <div className='note-memo-foot mono'>
-                <span>{`NOTE #${String(idx + 1).padStart(2, '0')}`}</span>
-                <span className='note-memo-arrow'>
-                  <span>{t('readMore')}</span>
-                  <span>↗</span>
-                </span>
-              </div>
-            </Link>
+              cta={t('readMore')}
+            />
           )
         })}
       </div>
@@ -1036,46 +758,23 @@ const LayoutCategoryIndex = props => {
   const { lang, t } = useLang()
 
   return (
-    <div className='wrap' style={{ padding: '40px 0 80px' }}>
-      <div className='article-top-bar'>
-        <Link href='/#notes' className='button ink'>
-          <span>{t('backToLab')}</span>
-        </Link>
-        <span className='mono'>
-          FIELD NOTES // {categoryOptions.length} CATEGORIES
-        </span>
-      </div>
+    <div className='fn-page wrap'>
+      <Crumbs label={t('backToLab')}>
+        FIELD NOTES // {categoryOptions.length} CATEGORIES
+      </Crumbs>
 
-      <div className='section-heading'>
-        <div>
-          <span className='eyebrow mono'>INDEX BY CATEGORY</span>
-          <h2>{t('category')}</h2>
-        </div>
-      </div>
+      <SectionHead eyebrow='INDEX BY CATEGORY' title={t('category')} />
 
-      <div className='notes-memo-grid' style={{ marginTop: 28 }}>
+      <div className='fn-posters'>
         {categoryOptions.map((cat, idx) => (
-          <Link
+          <Poster
             key={cat.name || idx}
             href={`/category/${encodeURIComponent(cat.name)}`}
-            className='note-memo-card'
-          >
-            <div className='note-memo-tape' aria-hidden='true' />
-            <div className='note-memo-header mono'>
-              <span className='note-cat'>FOLDER #{String(idx + 1).padStart(2, '0')}</span>
-              <span>{cat.count || 0} NOTES</span>
-            </div>
-            <h3 className='note-memo-title' style={{ marginTop: 8 }}>
-              {localizeCategory(cat.name, lang)}
-            </h3>
-            <div className='note-memo-foot mono'>
-              <span>OPEN DOSSIER</span>
-              <span className='note-memo-arrow'>
-                <span>{t('readMore')}</span>
-                <span>↗</span>
-              </span>
-            </div>
-          </Link>
+            no={`#${String(idx + 1).padStart(2, '0')}`}
+            category={`${cat.count || 0} NOTES`}
+            title={localizeCategory(cat.name, lang)}
+            cta={t('readMore')}
+          />
         ))}
       </div>
     </div>
@@ -1091,50 +790,24 @@ const LayoutTagIndex = props => {
   const visibleTags = filterDisplayTags(tagOptions)
 
   return (
-    <div className='wrap' style={{ padding: '40px 0 80px' }}>
-      <div className='article-top-bar'>
-        <Link href='/#notes' className='button ink'>
-          <span>{t('backToLab')}</span>
-        </Link>
-        <span className='mono'>FIELD NOTES // {visibleTags.length} TAGS</span>
-      </div>
+    <div className='fn-page wrap'>
+      <Crumbs label={t('backToLab')}>
+        FIELD NOTES // {visibleTags.length} TAGS
+      </Crumbs>
 
-      <div className='section-heading'>
-        <div>
-          <span className='eyebrow mono'>INDEX BY TAG</span>
-          <h2>{t('tags')}</h2>
-        </div>
-      </div>
+      <SectionHead eyebrow='INDEX BY TAG' title={t('tags')} />
 
-      <div className='article-paper' style={{ marginTop: 28 }}>
-        <span className='article-paper-tape' aria-hidden='true' />
-        <div className='article-window-bar mono'>
-          <span>● ● ●</span>
-          <span>FIELD NOTE / TAGS DIRECTORY</span>
-          <span>↗</span>
-        </div>
-        <div
-          className='article-inner'
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}
-        >
-          {visibleTags.map(tg => {
-            const name = typeof tg === 'string' ? tg : tg.name
-            const count = typeof tg === 'object' ? tg.count : undefined
-            return (
-              <Link
-                key={name}
-                href={`/tag/${encodeURIComponent(name)}`}
-                className='nav-dropdown-trigger mono'
-                style={{ padding: '8px 14px', fontSize: 13 }}
-              >
-                <span>#{localizeTag(name, lang)}</span>
-                {count !== undefined && (
-                  <span style={{ color: 'var(--muted)' }}>({count})</span>
-                )}
-              </Link>
-            )
-          })}
-        </div>
+      <div className='fn-tagwall'>
+        {visibleTags.map(tg => {
+          const name = typeof tg === 'string' ? tg : tg.name
+          const count = typeof tg === 'object' ? tg.count : undefined
+          return (
+            <Link key={name} href={`/tag/${encodeURIComponent(name)}`} className='fn-chip'>
+              #{localizeTag(name, lang)}
+              {count !== undefined && <b>{count}</b>}
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
@@ -1146,28 +819,11 @@ const LayoutSearch = LayoutPostList
 const Layout404 = () => {
   const { t } = useLang()
   return (
-    <div
-      className='wrap'
-      style={{
-        padding: '120px 0',
-        textAlign: 'center',
-        minHeight: '60vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
-      <span className='hello sticker' style={{ marginBottom: '20px' }}>
-        {t('pageNotFound')}
-      </span>
-      <h1 style={{ fontSize: '72px', fontWeight: 900, marginBottom: '20px' }}>
-        404
-      </h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '30px' }}>
-        {t('notFoundDesc')}
-      </p>
-      <Link href='/' className='button ink'>
+    <div className='fn-page wrap fn-404'>
+      <span className='fn-slap'>{t('pageNotFound')}</span>
+      <h1>404</h1>
+      <p>{t('notFoundDesc')}</p>
+      <Link href='/' className='fn-btn'>
         <span>{t('backToHome')}</span>
         <span aria-hidden='true'>↗</span>
       </Link>

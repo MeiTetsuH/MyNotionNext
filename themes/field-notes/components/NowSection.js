@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useLang } from './LangContext'
 import { StackStickers } from './StackStickers'
 import { LabFigure, LabNoteCard, LabStickerStrip } from './LabFigure'
+import { SectionHead } from './SectionHead'
 
 export const NowSection = () => {
   const { t } = useLang()
@@ -10,6 +11,13 @@ export const NowSection = () => {
 
   return (
     <section className='now-section wrap home-lab' id='now' aria-labelledby='now-title'>
+      <SectionHead
+        no='01'
+        eyebrow='BUILD · RUN · KEEP'
+        titleHtml={t('nowTitle')}
+        titleId='now-title'
+        note='a little studio, at home.'
+      />
       <div
         className={`now-paper${notebookOpen ? ' is-notebook-open' : ''}`}
         data-notebook-open={notebookOpen ? 'true' : 'false'}
@@ -24,19 +32,10 @@ export const NowSection = () => {
             activeId={activeTag}
             onClose={() => setActiveTag(null)}
           />
-          <span className='lab-handwritten' aria-hidden='true'>
-            a little studio, at home.
-          </span>
-
           <StackStickers variant='art' />
         </div>
 
         <div className='now-copy lab-copy'>
-          <div className='eyebrow mono'>01 / BUILD · RUN · KEEP</div>
-          <h2
-            id='now-title'
-            dangerouslySetInnerHTML={{ __html: t('nowTitle') }}
-          />
           <p
             className='lab-intro'
             dangerouslySetInnerHTML={{ __html: t('nowDesc') }}

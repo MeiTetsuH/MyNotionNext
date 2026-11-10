@@ -3,6 +3,7 @@ import { siteConfig } from '@/lib/config'
 import { useLang } from './LangContext'
 import { parseMultiLang } from '../data'
 import CONFIG from '../config'
+import { Arrow, Bolt, Burst, Crosses, Crown, DripDot, SprayBlob } from './Graffiti'
 
 // Optional overrides from the Notion config table, written as "中文 || English || 日本語"
 const notionText = (key, lang) => {
@@ -16,86 +17,103 @@ export const Hero = ({ onOpenHeroPhoto }) => {
   const scribbleText = notionText('FIELD_NOTES_SCRIBBLE', lang) || t('scribble')
 
   return (
-    <section className='hero wrap' aria-labelledby='hero-title'>
-      <div className='issue mono'>
-        <span>FIELD NOTES — VOL. 01</span>
-        <span>CODE / CAMERA / CURIOSITY</span>
-      </div>
-      <div className='hero-grid'>
-        <div className='hero-copy'>
-          <span className='hello sticker'>{t('hello')}</span>
-          <h1 id='hero-title' aria-label='H.mz'>
-            H<span className='title-dot' aria-hidden='true'>.</span>mz
-          </h1>
-          <p className='brand-subline mono'>MINGZHE / PERSONAL LAB</p>
-          <p className='role-line'>{t('roleLine')}</p>
-          <h2>
-            <span>{t('headline1')}</span>
-            <br />
-            <span className='highlight'>{t('headline2')}</span>
-          </h2>
-          <p
-            className='intro'
-            dangerouslySetInnerHTML={{ __html: t('intro') }}
-          />
-          <a className='button ink' href='#work'>
-            <span>{t('explore')}</span>
-            <span aria-hidden='true'>↘</span>
-          </a>
-          <div className='hero-foot mono'>
-            <span className='status-dot'></span>
-            <span>{statusText}</span>
-          </div>
+    <section className='fn-hero' aria-labelledby='hero-title'>
+      <div className='wrap'>
+        <div className='fn-issue mono'>
+          <span>FIELD NOTES — VOL. 01</span>
+          <span>CODE / CAMERA / CURIOSITY</span>
         </div>
 
-        <div className='collage' aria-label='Photography collage'>
-          <span className='scribble-note'>{scribbleText}</span>
-          <svg className='scribble-arrow' viewBox='0 0 130 90' aria-hidden='true'>
-            <path d='M5 8C89 0 115 35 61 62M63 44L58 68 83 67' />
-          </svg>
-          <button
-            type='button'
-            className='polaroid hero-photo'
-            onClick={() => onOpenHeroPhoto && onOpenHeroPhoto(0)}
-            aria-label={t('heroWaterfallTitle')}>
-            <span className='tape' aria-hidden='true'></span>
-            <img
-              src='/themes/field-notes/assets/phone-waterfall-small.jpg'
-              alt={t('heroWaterfallAlt')}
-              loading='eager'
-              fetchpriority='high'
-            />
-            <span className='photo-label'>
-              <span>{t('heroWaterfallPlace')}</span>
-              <span>↗</span>
-            </span>
-          </button>
-          <div className='round-sticker' aria-hidden='true'>
-            STAY<br />CURIOUS<span>↗</span>
+        <div className='fn-hero-grid'>
+          <div className='fn-hero-copy'>
+            <span className='fn-slap'>{t('hello')}</span>
+            <h1 id='hero-title' className='fn-wordmark' aria-label='H.mz'>
+              <span aria-hidden='true'>H</span>
+              <DripDot />
+              <span aria-hidden='true'>mz</span>
+            </h1>
+            <p className='fn-role mono'>
+              <span>MINGZHE / PERSONAL LAB</span>
+              <span>{t('roleLine')}</span>
+            </p>
+            <h2 className='fn-headline'>
+              <span>{t('headline1')}</span>
+              <span className='fn-swipe'>{t('headline2')}</span>
+            </h2>
+            <p className='fn-intro' dangerouslySetInnerHTML={{ __html: t('intro') }} />
+            <div className='fn-hero-cta'>
+              <a className='fn-btn fn-btn--acid' href='#work'>
+                <span>{t('explore')}</span>
+                <span aria-hidden='true'>↘</span>
+              </a>
+              <span className='fn-status mono'>
+                <i aria-hidden='true' />
+                <span>{statusText}</span>
+              </span>
+            </div>
           </div>
-          <button
-            type='button'
-            className='polaroid sky-photo phone-portrait'
-            onClick={() => onOpenHeroPhoto && onOpenHeroPhoto(1)}
-            aria-label={t('heroCraneTitle')}>
-            <img
-              src='/themes/field-notes/assets/phone-crane-small.jpg'
-              alt={t('heroCraneAlt')}
-              loading='lazy'
-            />
-            <span className='photo-label'>
-              <span>{t('heroCraneTitle')}</span>
-              <span>↗</span>
+
+          <div className='fn-collage' aria-label='Photography collage'>
+            <SprayBlob />
+            <Crosses />
+            <span className='fn-collage-note'>
+              {scribbleText}
+              <Arrow />
             </span>
-          </button>
-          <span className='photo-index mono'>
-            FIG. 01 — LIFE OUTSIDE THE TERMINAL
-          </span>
-          <svg className='star-doodle' viewBox='0 0 90 90' aria-hidden='true'>
-            <path d='M45 5L51 31 76 17 61 40 87 48 60 53 73 79 49 62 40 88 34 60 9 72 27 49 3 39 32 34Z' />
-          </svg>
+
+            <button
+              type='button'
+              className='fn-print fn-print--a'
+              onClick={() => onOpenHeroPhoto && onOpenHeroPhoto(0)}
+              aria-label={t('heroWaterfallTitle')}>
+              <span className='fn-gaffer' aria-hidden='true' />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src='/themes/field-notes/assets/phone-waterfall-small.jpg'
+                alt={t('heroWaterfallAlt')}
+                loading='eager'
+                fetchpriority='high'
+              />
+              <span className='fn-print-label'>
+                <span>{t('heroWaterfallPlace')}</span>
+                <span aria-hidden='true'>↗</span>
+              </span>
+            </button>
+
+            <div className='fn-roundel' aria-hidden='true'>
+              STAY
+              <br />
+              CURIOUS
+              <span>↗</span>
+            </div>
+
+            <button
+              type='button'
+              className='fn-print fn-print--b'
+              onClick={() => onOpenHeroPhoto && onOpenHeroPhoto(1)}
+              aria-label={t('heroCraneTitle')}>
+              <span className='fn-gaffer' aria-hidden='true' />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src='/themes/field-notes/assets/phone-crane-small.jpg'
+                alt={t('heroCraneAlt')}
+                loading='lazy'
+              />
+              <span className='fn-print-label'>
+                <span>{t('heroCraneTitle')}</span>
+                <span aria-hidden='true'>↗</span>
+              </span>
+            </button>
+
+            <Crown />
+            <Burst />
+            <Bolt />
+            <span className='fn-fig mono'>FIG. 01 — LIFE OUTSIDE THE TERMINAL</span>
+          </div>
         </div>
       </div>
     </section>
   )
 }
+
+export default Hero
