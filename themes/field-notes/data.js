@@ -230,7 +230,16 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
       const slugStr = String(p.slug || '').trim()
       const cleanSlug = slugStr.replace(/^\/?(?:en\/|ja\/)?(?:article\/)?/i, '')
       const fileSlug = cleanSlug.startsWith('photo-') ? cleanSlug.slice(6) : ''
-      const matchedLocal = fileSlug ? LOCAL_PHOTO_BY_FILE.get(fileSlug) : null
+      const rawCover = String(p.pageCover || p.pageCoverThumbnail || '')
+      let decodedCover = rawCover
+      try {
+        decodedCover = decodeURIComponent(rawCover)
+      } catch {}
+      const coverFileMatch = decodedCover.match(/\/assets\/([a-z0-9-]+?)(?:-small)?\.jpg/i)
+      const matchedLocal =
+        (fileSlug && LOCAL_PHOTO_BY_FILE.get(fileSlug)) ||
+        (coverFileMatch && LOCAL_PHOTO_BY_FILE.get(coverFileMatch[1])) ||
+        null
 
       // summary 格式约定: "地点(可三语) @ 参数 @ 描述(可三语)" 或 "地点(可三语) @ 参数"
       const {
@@ -248,11 +257,6 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
       const formattedDate = formatNotionDate(p)
       const titleText = parseMultiLang(p.title, lang)
 
-      const rawCover = String(p.pageCover || p.pageCoverThumbnail || '')
-      let decodedCover = rawCover
-      try {
-        decodedCover = decodeURIComponent(rawCover)
-      } catch {}
       const usesCanonicalAsset =
         matchedLocal &&
         (!rawCover ||
@@ -274,6 +278,7 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
         orderHint: matchedLocal ? matchedLocal.orderIdx : 900 + idx,
         thumbSrc,
         fullSrc,
+        ratio: matchedLocal ? matchedLocal.meta.ratio || 1.5 : null,
         title: titleText,
         alt: altText,
         place: placeText,
@@ -305,6 +310,7 @@ export function getCombinedPhotos(allPages = [], lang = 'zh') {
       isNotion: false,
       thumbSrc: `/themes/field-notes/assets/${p.file}-small.jpg`,
       fullSrc: `/themes/field-notes/assets/${p.file}.jpg`,
+      ratio: p.ratio || 1.5,
       title: t(`photoTitle${id}`),
       alt: t(`photoAlt${id}`),
       place: t(p.place),

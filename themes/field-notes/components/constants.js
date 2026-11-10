@@ -51,7 +51,8 @@ const photos = [
     "place": "placeTree",
     "settings": "33mm · f/1.8 · 1/80s · ISO 320",
     "camera": "FUJIFILM X-S20",
-    "category": "landscape"
+    "category": "landscape",
+    "ratio": 0.6668
   },
   {
     "file": "bamboo",
@@ -59,7 +60,8 @@ const photos = [
     "place": "placeTree",
     "settings": "33mm · f/2 · 1/170s · ISO 320",
     "camera": "FUJIFILM X-S20",
-    "category": "landscape"
+    "category": "landscape",
+    "ratio": 0.6668
   },
   {
     "file": "meadow",
@@ -107,7 +109,8 @@ const photos = [
     "place": "placeNorth",
     "settings": "33mm · f/3.2 · 1/420s · ISO 320",
     "camera": "FUJIFILM X-S20",
-    "category": "landscape"
+    "category": "landscape",
+    "ratio": 0.6668
   },
   {
     "file": "sengen",
@@ -115,7 +118,8 @@ const photos = [
     "place": "placeSengen",
     "category": "everyday",
     "camera": "FUJIFILM X-S20",
-    "settings": "33mm · f/2.5 · 1/10500s · ISO 640"
+    "settings": "33mm · f/2.5 · 1/10500s · ISO 640",
+    "ratio": 0.6667
   },
   {
     "file": "fuji-sea",
@@ -123,7 +127,8 @@ const photos = [
     "place": "placeShizuokaSea",
     "category": "landscape",
     "camera": "FUJIFILM X-S20",
-    "settings": "33mm · f/2.8 · 1/14000s · ISO 640"
+    "settings": "33mm · f/2.8 · 1/14000s · ISO 640",
+    "ratio": 0.6667
   },
   {
     "file": "harumi-rain",
@@ -146,8 +151,8 @@ const photos = [
 ];
 // Phone snapshots belong only to the hero, separate from the camera timeline.
 const heroPhotos = [
-  {file:'phone-waterfall', key:'heroWaterfall', date:'2025.06.29', camera:'iPhone'},
-  {file:'phone-crane', key:'heroCrane', date:'2024', camera:'iPhone'}
+  {file:'phone-waterfall', key:'heroWaterfall', date:'2025.06.29', camera:'iPhone', ratio: 4 / 3},
+  {file:'phone-crane', key:'heroCrane', date:'2024', camera:'iPhone', ratio: 3 / 4}
 ];
 const photoOrder = [7, 8, 9, 10, 11, 12, 2, 0, 3, 6, 5, 4, 1, 13, 14, 15, 16];
 

@@ -63,11 +63,11 @@ export const useFieldNotes = () => useContext(FieldNotesContext)
 // language's pair is requested.
 const FONT_API = 'https://fonts.googleapis.com/css2?'
 const FONT_BASE =
-  'family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@500;700&family=Rubik+Spray+Paint'
+  'family=Archivo:wdth,wght@62..125,400..900&family=Caveat:wght@700&family=IBM+Plex+Mono:wght@500;700&family=Rubik+Spray+Paint'
 const FONT_BY_LANG = {
   zh: 'family=LXGW+WenKai+TC:wght@700&family=Noto+Sans+SC:wght@700..900',
   ja: 'family=Klee+One:wght@600&family=Noto+Sans+JP:wght@700..900',
-  en: 'family=Caveat:wght@700'
+  en: ''
 }
 
 /**
@@ -324,12 +324,14 @@ const LayoutBaseInner = props => {
         <link rel='preconnect' href='https://fonts.gstatic.com' crossOrigin='anonymous' />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link key='fn-font-base' rel='stylesheet' href={`${FONT_API}${FONT_BASE}&display=swap`} />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          key='fn-font-lang'
-          rel='stylesheet'
-          href={`${FONT_API}${FONT_BY_LANG[lang] || FONT_BY_LANG.zh}&display=swap`}
-        />
+        {FONT_BY_LANG[lang] && (
+          /* eslint-disable-next-line @next/next/no-page-custom-font */
+          <link
+            key='fn-font-lang'
+            rel='stylesheet'
+            href={`${FONT_API}${FONT_BY_LANG[lang]}&display=swap`}
+          />
+        )}
       </Head>
       <div id='theme-field-notes'>
         <LegacyStyle />

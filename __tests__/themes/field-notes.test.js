@@ -3,11 +3,13 @@ import {
   parsePhotoSummary,
   formatPostSummary,
   formatNotionDate,
+  getCombinedPhotos,
   getLocalizedBlogPosts,
   createTranslator,
   parseNotionWorkProject,
   extractNoteLines
 } from '@/themes/field-notes/data'
+import { heroPhotos } from '@/themes/field-notes/components/constants'
 import { generateStructuredData, pickPrimaryLanguage } from '@/components/SEO'
 import { labSchedule, formatClock } from '@/themes/field-notes/components/LabFigure'
 
@@ -282,6 +284,26 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
         { type: 'text', text: 'nested line' },
         { type: 'header_4', text: 'Subheading 4' }
       ])
+    })
+  })
+
+  describe('Polaroid viewer aspect ratio metadata', () => {
+    test('provides synchronous aspect ratio for portrait and landscape photos', () => {
+      const combined = getCombinedPhotos([], 'ja')
+      const portraitFiles = new Set(['tree', 'bamboo', 'north', 'sengen', 'fuji-sea'])
+      for (const item of combined) {
+        expect(typeof item.ratio).toBe('number')
+        const fileMatch = item.fullSrc.match(/\/assets\/([a-z0-9-]+)\.jpg$/)
+        const fileName = fileMatch ? fileMatch[1] : ''
+        if (portraitFiles.has(fileName)) {
+          expect(item.ratio).toBeLessThan(0.95)
+          expect(item.ratio).toBeCloseTo(2 / 3, 2)
+        } else {
+          expect(item.ratio).toBeCloseTo(1.5, 2)
+        }
+      }
+      expect(heroPhotos[0].ratio).toBeCloseTo(4 / 3, 3)
+      expect(heroPhotos[1].ratio).toBeCloseTo(3 / 4, 3)
     })
   })
 })
