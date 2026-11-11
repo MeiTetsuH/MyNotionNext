@@ -22,13 +22,6 @@ export const DripDot = ({ className = '' }) => (
   </Svg>
 )
 
-/** Runs of paint hanging off the bottom edge of a block. */
-export const Drips = ({ className = '' }) => (
-  <Svg className={`fn-drips ${className}`} viewBox='0 0 400 90' preserveAspectRatio='none'>
-    <path d='M0 0H400V8H372V30a7 7 0 0 1-14 0V8H300V58a8 8 0 0 1-16 0V8H214V22a6 6 0 0 1-12 0V8H128V74a9 9 0 0 1-18 0V8H62V38a7 7 0 0 1-14 0V8H0Z' />
-  </Svg>
-)
-
 /** Two passes of a marker under a word. */
 export const Scribble = ({ className = '' }) => (
   <Svg className={`fn-scribble ${className}`} viewBox='0 0 240 34' preserveAspectRatio='none'>
@@ -60,13 +53,6 @@ export const Burst = ({ className = '' }) => (
 export const Crosses = ({ className = '' }) => (
   <Svg className={`fn-crosses ${className}`} viewBox='0 0 120 40'>
     <path d='M6 8L30 32M30 8L6 32M48 8L72 32M72 8L48 32M90 8L114 32M114 8L90 32' />
-  </Svg>
-)
-
-/** A loose ring, the kind drawn around something worth a second look. */
-export const Ring = ({ className = '' }) => (
-  <Svg className={`fn-ring ${className}`} viewBox='0 0 120 90' preserveAspectRatio='none'>
-    <path pathLength='1' d='M18 46C14 20 52 6 84 12c28 6 34 34 18 54-16 20-62 22-82 2C10 58 12 42 30 30' />
   </Svg>
 )
 

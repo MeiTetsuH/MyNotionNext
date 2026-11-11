@@ -1,3 +1,6 @@
+import React, { act } from 'react'
+import { hydrateRoot } from 'react-dom/client'
+import { TextEncoder, TextDecoder } from 'util'
 import {
   parseMultiLang,
   parsePhotoSummary,
@@ -7,8 +10,15 @@ import {
   getLocalizedBlogPosts,
   createTranslator,
   parseNotionWorkProject,
-  extractNoteLines
+  extractNoteLines,
+  resolvePostHref
 } from '@/themes/field-notes/data'
+import {
+  LangProvider,
+  useLang,
+  resolveInitialLang
+} from '@/themes/field-notes/components/LangContext'
+import { Hero } from '@/themes/field-notes/components/Hero'
 import { heroPhotos } from '@/themes/field-notes/components/constants'
 import { generateStructuredData, pickPrimaryLanguage } from '@/components/SEO'
 import { labSchedule, formatClock } from '@/themes/field-notes/components/LabFigure'
@@ -304,6 +314,125 @@ describe('Field Notes Theme Validations & Bug Fixes', () => {
       }
       expect(heroPhotos[0].ratio).toBeCloseTo(4 / 3, 3)
       expect(heroPhotos[1].ratio).toBeCloseTo(3 / 4, 3)
+    })
+  })
+
+  describe('resolveInitialLang & resolvePostHref', () => {
+    test('prioritises explicit ?lang= / ?locale= query over saved storage', () => {
+      expect(
+        resolveInitialLang({
+          search: '?lang=en',
+          saved: 'ja',
+          languages: ['zh-CN']
+        })
+      ).toEqual({ lang: 'en', fromQuery: true })
+
+      expect(
+        resolveInitialLang({
+          search: '?locale=ja-JP',
+          saved: 'zh',
+          languages: ['en-US']
+        })
+      ).toEqual({ lang: 'ja', fromQuery: true })
+    })
+
+    test('uses valid saved storage and ignores invalid saved values', () => {
+      expect(
+        resolveInitialLang({
+          search: '',
+          saved: 'ja',
+          languages: ['en-US']
+        })
+      ).toEqual({ lang: 'ja', fromQuery: false })
+
+      expect(
+        resolveInitialLang({
+          search: '',
+          saved: 'corrupted-value',
+          languages: ['fr-FR', 'de-DE']
+        })
+      ).toEqual({ lang: 'en', fromQuery: false })
+    })
+
+    test('maps CJK browser locales directly and falls back non-CJK international locales to en', () => {
+      expect(
+        resolveInitialLang({ search: '', saved: '', languages: ['zh-TW', 'en'] })
+      ).toEqual({ lang: 'zh', fromQuery: false })
+      expect(
+        resolveInitialLang({ search: '', saved: '', languages: ['ja-JP'] })
+      ).toEqual({ lang: 'ja', fromQuery: false })
+      expect(
+        resolveInitialLang({ search: '', saved: '', languages: ['ko-KR'] })
+      ).toEqual({ lang: 'en', fromQuery: false })
+      expect(
+        resolveInitialLang({ search: '', saved: '', languages: [] })
+      ).toEqual({ lang: 'zh', fromQuery: false })
+    })
+
+    test('normalizes internal post hrefs without protocol-relative //slug bugs', () => {
+      expect(resolvePostHref({ slug: '/article/dev5' })).toBe('/article/dev5')
+      expect(resolvePostHref({ href: '//article/dev5' })).toBe('/article/dev5')
+      expect(resolvePostHref({ slug: 'article/live2' })).toBe('/article/live2')
+      expect(
+        resolvePostHref({ slug: 'https://github.com/MeiTetsuH/R2FileBox' })
+      ).toBe('https://github.com/MeiTetsuH/R2FileBox')
+      expect(resolvePostHref({}, '', '#work')).toBe('#work')
+    })
+
+    test('hydrates Hero + LangProvider cleanly in React 18 without mismatch or fetchpriority warnings', () => {
+      const Probe = () => {
+        const { lang, t } = useLang()
+        return (
+          <div data-testid='probe' data-lang={lang}>
+            {t('filterAll')}
+          </div>
+        )
+      }
+      const tree = (
+        <LangProvider>
+          <Probe />
+          <Hero />
+        </LangProvider>
+      )
+
+      if (!global.TextEncoder) global.TextEncoder = TextEncoder
+      if (!global.TextDecoder) global.TextDecoder = TextDecoder
+      globalThis.IS_REACT_ACT_ENVIRONMENT = true
+      const { renderToString } = require('react-dom/server')
+      const ssrSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      const ssrHtml = renderToString(tree)
+      ssrSpy.mockRestore()
+      const container = document.createElement('div')
+      container.innerHTML = ssrHtml
+      document.body.appendChild(container)
+
+      const originalHref = window.location.href
+      window.history.replaceState({}, '', '/?lang=en')
+      window.localStorage.setItem('h-mz-language', 'ja')
+
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      let root = null
+      try {
+        act(() => {
+          root = hydrateRoot(container, tree)
+        })
+
+        expect(errorSpy).not.toHaveBeenCalled()
+        expect(container.querySelector('img[fetchpriority="high"]')).not.toBeNull()
+        const probe = container.querySelector('[data-testid="probe"]')
+        expect(probe?.getAttribute('data-lang')).toBe('en')
+        expect(probe?.textContent).toBe('All')
+        expect(window.localStorage.getItem('h-mz-language')).toBe('en')
+        expect(document.documentElement.lang).toBe('en')
+      } finally {
+        act(() => {
+          if (root) root.unmount()
+        })
+        container.remove()
+        errorSpy.mockRestore()
+        window.history.replaceState({}, '', originalHref)
+        window.localStorage.clear()
+      }
     })
   })
 })

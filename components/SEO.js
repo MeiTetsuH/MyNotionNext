@@ -132,6 +132,11 @@ const SEO = props => {
   const TWITTER_CREATOR = siteConfig('TWITTER_CREATOR', '', NOTION_CONFIG)
 
   const AUTHOR = siteConfig('AUTHOR')
+  const isFieldNotes =
+    siteConfig('THEME', null, NOTION_CONFIG) === 'field-notes'
+  const resolvedThemeColor = pwaEnabled
+    ? pwaConfig.themeColor
+    : BACKGROUND_DARK || (isFieldNotes ? '#f0eee9' : '')
   const noindex = Boolean(post?.password) ||
     shouldNoIndexPath(router.asPath || router.route) ||
     shouldNoIndexPath(post?.slug || '') ||
@@ -141,10 +146,9 @@ const SEO = props => {
       <link rel='icon' href={favicon} />
       <link rel='apple-touch-icon' sizes='180x180' href='/apple-touch-icon.png' />
       <title>{title}</title>
-      <meta
-        name='theme-color'
-        content={pwaEnabled ? pwaConfig.themeColor : BACKGROUND_DARK}
-      />
+      {resolvedThemeColor && (
+        <meta name='theme-color' content={resolvedThemeColor} />
+      )}
       <meta
         name='viewport'
         content='width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, viewport-fit=cover'
@@ -178,12 +182,8 @@ const SEO = props => {
         />
       )}
 
-      {/* 基础SEO元数据与多语言关联 */}
+      {/* 基础SEO元数据 */}
       <link rel='canonical' href={url} />
-      <link rel='alternate' hrefLang='zh-CN' href={url} />
-      <link rel='alternate' hrefLang='ja' href={url} />
-      <link rel='alternate' hrefLang='en' href={url} />
-      <link rel='alternate' hrefLang='x-default' href={url} />
       {/* RSS 自动发现：浏览器地址栏与阅读器依赖此声明 */}
       {ENABLE_RSS && rssUrl && (
         <link

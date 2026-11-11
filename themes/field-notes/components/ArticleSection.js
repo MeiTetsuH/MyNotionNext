@@ -3,12 +3,12 @@ import Link from 'next/link'
 import { useLang } from './LangContext'
 import { Poster } from './Poster'
 import { SectionHead } from './SectionHead'
-import { localizeCategory, localizeTag } from '../data'
+import { localizeCategory, localizeTag, resolvePostHref } from '../data'
 
 // Home shows one featured note plus a single full row; the rest live in the archive
 const HOME_GRID_LIMIT = 3
 
-const hrefOf = post => post.href || `/${post.slug || post.id}`
+const hrefOf = post => resolvePostHref(post, post.slug || post.id)
 const dateOf = post =>
   post.formattedDate || post?.date?.start_date || post?.publishDay || ''
 const coverOf = post => post.pageCoverThumbnail || post.pageCover || ''
@@ -37,7 +37,7 @@ export const ArticleSection = ({ posts = [] }) => {
 
   const featured = filteredPosts[0] || null
   const gridPosts = filteredPosts.slice(1, 1 + HOME_GRID_LIMIT)
-  const allLabel = t('filterAll')?.split('/')[0]?.trim() || '全部'
+  const allLabel = t('filterAll') || '全部'
 
   return (
     <section className='fn-notes' id='notes' aria-labelledby='articles-title'>

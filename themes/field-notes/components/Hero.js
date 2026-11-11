@@ -67,7 +67,7 @@ export const Hero = ({ onOpenHeroPhoto }) => {
               onClick={() => onOpenHeroPhoto && onOpenHeroPhoto(0)}
               aria-label={t('heroWaterfallTitle')}>
               <span className='fn-gaffer' aria-hidden='true' />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {/* eslint-disable-next-line @next/next/no-img-element, react/no-unknown-property */}
               <img
                 src='/themes/field-notes/assets/phone-waterfall-small.jpg'
                 alt={t('heroWaterfallAlt')}

@@ -71,6 +71,7 @@ export const ContactSheet = ({ photos = [], onOpen }) => {
                       type='button'
                       onClick={() => onOpen && onOpen(absIdx)}
                       aria-label={`${no} · ${photo.title}`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={photo.thumbSrc} alt={photo.alt || ''} loading='lazy' />
                       <svg className='grease-circle' viewBox='0 0 120 90' aria-hidden='true'>
                         <path pathLength='1' d='M18 46C14 20 52 6 84 12c28 6 34 34 18 54-16 20-62 22-82 2C10 58 12 42 30 30' />

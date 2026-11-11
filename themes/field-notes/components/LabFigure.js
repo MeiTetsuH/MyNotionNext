@@ -167,7 +167,7 @@ const COPY = {
   }
 }
 
-export const getLabCopy = lang => COPY[lang] || COPY.zh
+const getLabCopy = lang => COPY[lang] || COPY.zh
 
 const NODE_LINKS = {
   muse: NOTE_HOMELAB,

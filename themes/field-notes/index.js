@@ -50,11 +50,12 @@ import {
   parsePhotoSummary,
   parseNotionWorkProject,
   projects as defaultProjects,
-  resolveLocalizedBlockMap
+  resolveLocalizedBlockMap,
+  resolvePostHref
 } from './data'
 
-export const FieldNotesContext = createContext()
-export const useFieldNotes = () => useContext(FieldNotesContext)
+const FieldNotesContext = createContext()
+const useFieldNotes = () => useContext(FieldNotesContext)
 
 // Type: one Latin family for display, UI and English body, a mono for every
 // label, Source Han (Noto) for CJK headings and UI, and a hard-pen hand per
@@ -124,13 +125,7 @@ const LayoutBaseInner = props => {
     [allPagesSource, lang]
   )
 
-  // 2. Section A: 01 / HOME LAB
-  const homeLabPosts = useMemo(
-    () => allLocalizedItems.filter(p => p.section === 'homelab'),
-    [allLocalizedItems]
-  )
-
-  // 3. Section B: 02 / FIELD NOTES (#notes) — includes both general notes and Home Lab articles
+  // 2. Section: 02 / FIELD NOTES (#notes) — includes both general notes and Home Lab articles
   const notePosts = useMemo(
     () =>
       allLocalizedItems.filter(
@@ -297,11 +292,9 @@ const LayoutBaseInner = props => {
       t,
       combinedPhotos,
       allLocalizedItems,
-      homeLabPosts,
       notePosts,
       combinedProjects,
-      openViewer,
-      openPhotoRoll
+      openViewer
     }),
     [
       lang,
@@ -309,11 +302,9 @@ const LayoutBaseInner = props => {
       t,
       combinedPhotos,
       allLocalizedItems,
-      homeLabPosts,
       notePosts,
       combinedProjects,
-      openViewer,
-      openPhotoRoll
+      openViewer
     ]
   )
 
@@ -455,7 +446,7 @@ const ArticleDetail = ({ post, lock, validPassword }) => {
     const targetVariant = matchedGroup?.variants?.[lang]
 
     if (targetVariant && targetVariant.slug !== post.slug) {
-      const targetUrl = targetVariant.href || `/${targetVariant.slug}`
+      const targetUrl = resolvePostHref(targetVariant, targetVariant.slug)
       router.replace(targetUrl)
     }
   }, [lang, post?.slug, allLocalizedItems, router, localizedResolution.hasMultiLangBlocks])
@@ -742,7 +733,7 @@ const LayoutPostList = props => {
           return (
             <Poster
               key={post.id || idx}
-              href={post?.href || `/${postSlug}`}
+              href={resolvePostHref(post, postSlug)}
               no={`#${String(idx + 1).padStart(2, '0')}`}
               category={localizeCategory(post.category || 'NOTE', lang)}
               date={formatNotionDate(post)}

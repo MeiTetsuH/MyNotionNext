@@ -1,4 +1,4 @@
-import { createFeed, createFeedFileUrl } from '@/lib/utils/rss'
+import { createFeed, createFeedFileUrl, createFeedItemUrl } from '@/lib/utils/rss'
 import { getPostBlocks } from '@/lib/db/SiteDataApi'
 import ReactDOMServer from 'react-dom/server'
 
@@ -235,6 +235,63 @@ describe('createFeed with field-notes multilingual posts', () => {
     expect(addItemMock.mock.calls[0][0]).toMatchObject({
       title: 'A || B',
       description: 'a || b'
+    })
+  })
+
+  it('preserves external URL slugs, normalizes leading slashes, and skips password/noindex items', async () => {
+    expect(
+      createFeedItemUrl('https://me.mingzhe.uk/', '', {
+        slug: 'https://github.com/MeiTetsuH/R2FileBox'
+      })
+    ).toBe('https://github.com/MeiTetsuH/R2FileBox')
+
+    expect(
+      createFeedItemUrl('https://me.mingzhe.uk/', '', {
+        slug: '/article/dev5'
+      })
+    ).toBe('https://me.mingzhe.uk/article/dev5')
+
+    expect(
+      createFeedItemUrl('https://me.mingzhe.uk/', '', {
+        slug: 'article/example-9'
+      })
+    ).toBe('')
+
+    await createFeed({
+      siteInfo: { ...siteInfo, link: 'https://me.mingzhe.uk/' },
+      NOTION_CONFIG: FIELD_NOTES_CONFIG,
+      posts: [
+        {
+          id: 'ext-1',
+          title: 'R2FileBox',
+          slug: 'https://github.com/MeiTetsuH/R2FileBox',
+          summary: 'External project',
+          publishDay: '2025-02-01'
+        },
+        {
+          id: 'secret-1',
+          title: 'Locked',
+          slug: 'article/secret',
+          password: '123',
+          summary: 'Hidden',
+          publishDay: '2025-02-02'
+        },
+        {
+          id: 'noindex-1',
+          title: 'Template post',
+          slug: 'article/example-9',
+          summary: 'Template',
+          publishDay: '2025-02-03'
+        }
+      ],
+      allPages: [],
+      renderContent: () => Promise.resolve('content')
+    })
+
+    expect(addItemMock).toHaveBeenCalledTimes(1)
+    expect(addItemMock.mock.calls[0][0]).toMatchObject({
+      title: 'R2FileBox',
+      link: 'https://github.com/MeiTetsuH/R2FileBox'
     })
   })
 })

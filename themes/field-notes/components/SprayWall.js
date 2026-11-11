@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 // Each can sprays one of the theme tokens, so the cans follow the palette
-export const CANS = [
+const CANS = [
   { id: 'ink', token: '--ink' },
   { id: 'blue', token: '--blue' },
   { id: 'pink', token: '--pink' },
@@ -45,7 +45,25 @@ export const SprayWall = ({ labels }) => {
       if (keep.width && keep.height) keep.getContext('2d').drawImage(canvas, 0, 0)
       canvas.width = w
       canvas.height = h
-      if (keep.width && keep.height) canvas.getContext('2d').drawImage(keep, 0, 0)
+      if (keep.width && keep.height) {
+        const ctx = canvas.getContext('2d')
+        if (keep.width !== w) {
+          const scale = w / keep.width
+          ctx.drawImage(
+            keep,
+            0,
+            0,
+            keep.width,
+            keep.height,
+            0,
+            0,
+            w,
+            Math.round(keep.height * scale)
+          )
+        } else {
+          ctx.drawImage(keep, 0, 0)
+        }
+      }
     }
     fit()
     const ro = new ResizeObserver(fit)

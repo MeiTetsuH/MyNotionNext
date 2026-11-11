@@ -1,5 +1,6 @@
 import BLOG from '@/blog.config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
+import { shouldNoIndexPath } from '@/lib/search-index-policy'
 import { createFeed } from '@/lib/utils/rss'
 
 /**
@@ -25,7 +26,6 @@ function isCacheFresh() {
  */
 async function generateRssContent() {
   const locale = BLOG.LANG
-  const defaultLocale = BLOG.LANG
   const pageId = BLOG.NOTION_PAGE_ID
 
   // Parse the first (default) page ID for data fetching
@@ -43,7 +43,12 @@ async function generateRssContent() {
 
   // 复用构建时同一份文章列表，保证兜底 feed 与静态 feed 的条数与顺序一致
   const latestPosts = (props.latestPosts || []).filter(
-    post => post.type === 'Post' && post.status === 'Published'
+    post =>
+      post.type === 'Post' &&
+      post.status === 'Published' &&
+      !post.password &&
+      !shouldNoIndexPath(post.slug || '') &&
+      !shouldNoIndexPath(post.id || '')
   )
 
   if (latestPosts.length === 0) {

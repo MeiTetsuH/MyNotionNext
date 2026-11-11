@@ -20,16 +20,6 @@ export const LegacyStyle = () => (
     box-shadow: 6px 6px var(--ink);
     transform: rotate(.65deg)
 }
-.now-art {
-    position: relative;
-    min-height: 340px;
-    border-right: 2px dashed color-mix(in srgb,var(--ink) 38%,transparent);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 51px;
-    overflow: hidden
-}
 .now-copy {
     padding: 40px 85px 35px 42px
 }
@@ -38,11 +28,6 @@ export const LegacyStyle = () => (
     align-items: center;
     gap: 8px;
     font-size: 9px
-}
-.now-copy .status-dot {
-    background: var(--ink);
-    width: 6px;
-    height: 6px
 }
 .now-copy h2 {
     font-size: 29px;
@@ -55,17 +40,6 @@ export const LegacyStyle = () => (
     font-size: 13px;
     line-height: 1.9
 }
-.now-tags {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin: 17px 0 23px
-}
-.now-tags span {
-    font-size: 10px;
-    border: 1px solid color-mix(in srgb,var(--ink) 44%,transparent);
-    padding: 2px 9px
-}
 html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     font-size: 26px
 }
@@ -75,9 +49,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     }
     .now-copy h2 {
         font-size: 25px
-    }
-    .now-art {
-        min-height: 330px
     }
     .now-copy .eyebrow {
         font-size: 8px
@@ -95,9 +66,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
         transform: rotate(.4deg);
         box-shadow: 5px 5px var(--ink)
     }
-    .now-art {
-        display: none
-    }
     .now-copy {
         padding: 29px 25px
     }
@@ -113,48 +81,16 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     .now-copy>p {
         font-size: 12px
     }
-    .now-tags span {
-        font-size: 9px
-    }
-    .now-tags {
-        gap: 6px
-    }
     html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
         font-size: 25px
     }
-}
-.now-tags>.openclaw-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--purple);
-    border: 1px solid var(--ink);
-    box-shadow: 2px 2px var(--ink);
-    transform: rotate(-3deg);
-    font-weight: 700;
-    padding: 2px 10px
-}
-.now-art {
-    padding: 52px 15px 20px;
-    justify-content: center;
-    min-height: 565px
 }
 .now-copy {
     align-self: center;
     padding-top: 42px;
     padding-bottom: 38px
 }
-.now-tags {
-    margin-top: 22px
-}
 @media(max-width:720px) {
-    .now-art {
-        display: flex;
-        min-height: 0;
-        padding: 45px 14px 12px;
-        border-right: 0;
-        border-bottom: 2px dashed color-mix(in srgb,var(--ink) 38%,transparent)
-    }
     .now-copy {
         padding: 26px 25px 28px
     }
@@ -162,15 +98,18 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
         margin-bottom: 13px
     }
 }
-.intro,.project-copy>p:not(.project-deck),.now-copy>p {
+.intro,
+.now-copy>p {
     font-size: 16px
 }
 @media(max-width:720px) {
-    .intro,.project-copy>p:not(.project-deck),.now-copy>p,.studio-notes p,.notes {
+    .intro,
+.now-copy>p,
+.notes {
         font-size: 16px;
         line-height: 1.8
     }
-    .tags span,.now-tags span {
+    .tags span {
         font-size: 12px
     }
 }
@@ -213,20 +152,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     line-height: 1.5;
     border-bottom: 1px solid var(--ink);
     padding-bottom: 7px
-}
-#now .lab-devices {
-    display: block;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1197 / 1314;
-    object-fit: contain;
-    margin: 0
-}
-#now .lab-handwritten {
-    font: italic clamp(18px,2vw,25px)/1.4 Georgia,serif;
-    align-self: flex-start;
-    padding: 0 8px;
-    transform: rotate(-3deg)
 }
 #now .lab-copy {
     padding: 44px clamp(28px,3.4vw,50px) 34px;
@@ -344,14 +269,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     display: grid;
     gap: 8px
 }
-#now .lab-topics {
-    font-size: 12px;
-    line-height: 1.8;
-    letter-spacing: .3px;
-    color: var(--muted);
-    max-width: none;
-    margin-top: 8px
-}
 @media(min-width:721px) and (max-width:1000px) {
     #now .now-paper {
         grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr)
@@ -377,9 +294,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     #now .lab-chapters h3 {
         font-size: 17px
     }
-    #now .lab-handwritten {
-        font-size: 18px
-    }
 }
 @media(max-width:720px) {
     #now .now-paper {
@@ -395,14 +309,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     }
     #now .lab-art-label {
         font-size: 11px
-    }
-    #now .lab-devices {
-        width: min(100%,390px);
-        margin: 0 auto
-    }
-    #now .lab-handwritten {
-        font-size: 20px;
-        align-self: center
     }
     #now .lab-copy {
         padding: 29px 24px 24px
@@ -442,10 +348,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     #now .lab-notebook summary {
         font-size: 16px;
         min-height: 52px
-    }
-    #now .lab-topics {
-        font-size: 12px;
-        line-height: 1.8
     }
 }
 #now .lab-stack-board {
@@ -765,57 +667,14 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
         transition: none
     }
 }
-.lab-notion-links {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 12px;
-    margin-bottom: 20px;
-}
-.lab-notion-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fffdf5;
-    border: var(--border);
-    padding: 11px 16px;
-    box-shadow: 3px 3px var(--ink);
-    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
-    text-decoration: none;
-    color: var(--ink);
-}
-.lab-notion-card:hover {
-    transform: translate(2px, -2px);
-    box-shadow: 5px 5px var(--purple);
-    background: var(--paper);
-}
-.small-tag,
-      .article-card-category,
-      .note-cat,
-      .project-top,
-      .project-caption,
-      .window-bar .mono,
-      .tags span,
-      .filters button,
-      .eyebrow,
-      .now-copy .eyebrow,
-      .closing .eyebrow,
-      .article-window-bar,
-      .article-cover-caption,
-      .article-lang-pills button,
-      .article-lang-fallback,
-      .zoom-hint,
-      .hero-foot,
-      .brand-subline,
-      .photo-label,
-      .sky-photo .photo-label,
-      #viewer-index,
-      footer,
-      footer .mono,
-      .rope-header-tag,
-      .rope-more-pendant,
-      .rope-active-date,
-      .rope-full-caption .rope-sub {
+.tags span,
+.filters button,
+.eyebrow,
+.now-copy .eyebrow,
+.closing .eyebrow,
+#viewer-index,
+footer,
+footer .mono {
     font-size: 11px;
 }
 #now .lab-figure {
@@ -823,102 +682,8 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     width: 100%;
     margin: 0;
 }
-#now .lab-figure .lab-devices {
-    width: 100%;
-    margin: 0;
-}
-#now .lab-figure-ink {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    pointer-events: none;
-}
-#now .lab-cloud {
-    fill: #ffe4c4;
-    stroke: var(--ink);
-    stroke-width: 2.2;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-}
-#now .lab-tunnel {
-    fill: none;
-    stroke: #2a292f;
-    stroke-width: 2;
-    stroke-dasharray: 2 7;
-    stroke-linecap: round;
-    vector-effect: non-scaling-stroke;
-    opacity: .75
-}
-#now .lab-tunnel-head {
-    fill: none;
-    stroke: #2a292f;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-    opacity: .75
-}
-#now .lab-leader path {
-    fill: none;
-    stroke: var(--ink);
-    stroke-width: 1.4;
-    stroke-dasharray: 4 3;
-    vector-effect: non-scaling-stroke;
-}
-#now .lab-leader circle {
-    fill: var(--ink);
-}
-#now .lab-led-pulse {
-    fill: none;
-    stroke: #22c065;
-    stroke-width: 2;
-    vector-effect: non-scaling-stroke;
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: labLedPulse 2.4s ease-out infinite;
-}
-#now .lab-led-pulse.is-late {
-    animation-delay: 1.2s;
-}
-#now .lab-callout {
-    position: absolute;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    padding: 5px 9px 6px;
-    background: #fffef8;
-    border: 1.5px solid var(--ink);
-    box-shadow: 2px 2px var(--ink);
-    transform: rotate(var(--r));
-    font-size: 11px;
-    line-height: 1.35;
-    white-space: nowrap;
-}
-#now .lab-callout strong {
-    font-weight: 800;
-}
-#now .lab-callout span {
-    font-size: 11px;
-    color: #4b4a52;
-}
 #now .lab-art {
     justify-content: space-between;
-}
-#now .lab-callout-cloud {
-    background: #fff1e0;
-}
-#now .lab-callout-muse {
-    background: color-mix(in srgb,var(--blue) 14%,var(--card));
-}
-#now .lab-callout-cable {
-    background: #fff3a8;
-}
-#now .lab-callout-claw strong {
-    text-decoration: line-through;
-    text-decoration-thickness: 2px;
 }
 #now .lab-art-strip {
     --u: 40px;
@@ -944,10 +709,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     display: none;
 }
 @container labart (max-width: 380px) {
-    #now .lab-callout.is-minor,
-        #now .lab-leader.is-minor {
-        display: none;
-    }
     #now .lab-art-strip {
         --u: 36px;
     }
@@ -959,10 +720,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    #now .lab-led-pulse {
-        animation: none;
-        opacity: 0;
-    }
     #now .lab-art-strip > li {
         transition: none;
     }
@@ -975,36 +732,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     #now .lab-strip-label {
         flex-basis: 100%;
     }
-}
-#now button.lab-callout {
-    font: inherit;
-    font-size: 11px;
-    color: var(--ink);
-    text-align: left;
-    cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-}
-#now button.lab-callout:hover,
-    #now button.lab-callout:focus-visible {
-    transform: rotate(0deg) translateY(-2px);
-    box-shadow: 3px 4px var(--ink);
-    outline: none;
-}
-#now button.lab-callout.is-active {
-    background: var(--ink);
-    color: var(--green);
-    transform: rotate(0deg) scale(1.04);
-    z-index: 5;
-}
-#now button.lab-callout.is-active span {
-    color: var(--bone);
-}
-#now .lab-figure.has-active button.lab-callout:not(.is-active) {
-    opacity: 0.55;
-}
-#now .lab-leader.is-active path {
-    stroke-dasharray: none;
-    stroke-width: 2.4;
 }
 #now .lab-art {
     justify-content: space-between;
@@ -1243,9 +970,6 @@ html[lang=en] .now-copy h2,html[lang=ja] .now-copy h2 {
     #now .lab-stage {
         max-width: 660px;
         margin: 0 auto;
-    }
-    #now .lab-handwritten {
-        align-self: center;
     }
 }
 @media (max-width: 720px) {
@@ -1622,7 +1346,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     padding: 0.08em 0.38em !important;
     font-size: 0.86em;
 }
-#theme-field-notes #notion-article .notion-h {
+#theme-field-notes #notion-article .notion-header-anchor {
     scroll-margin-top: 24px;
 }
 #theme-field-notes #notion-article .notion-h1,
@@ -1943,8 +1667,7 @@ html.dark #theme-field-notes .notion-table-of-contents {
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    #theme-field-notes .riso-cover > img,
-      #theme-field-notes #notion-article .notion-row figure.notion-asset-wrapper-image {
+    #theme-field-notes #notion-article .notion-row figure.notion-asset-wrapper-image {
         transition: none;
     }
 }
@@ -2112,10 +1835,8 @@ html.dark #theme-field-notes .notion-table-of-contents {
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    #theme-field-notes .rope-img-wrap img,
-      #theme-field-notes .collage .polaroid img,
-      #theme-field-notes #viewer-image.is-developing,
-      #theme-field-notes .film-frame img {
+    #theme-field-notes #viewer-image.is-developing,
+#theme-field-notes .film-frame img {
         animation: none;
     }
     #viewer .viewer-image-wrap.is-flippable #viewer-image,
@@ -2134,31 +1855,6 @@ html.dark #theme-field-notes .notion-table-of-contents {
     to {
         opacity: 1;
         transform: translateY(0) rotate(-.5deg)
-    }
-}
-@keyframes labLedPulse {
-    0% {
-        transform: scale(0.6);
-        opacity: 0.9;
-    }
-    70% {
-        transform: scale(1.9);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(1.9);
-        opacity: 0;
-    }
-}
-@keyframes fnDevelop {
-    0% {
-        filter: brightness(1.85) contrast(0.42) saturate(0.15) sepia(0.12);
-    }
-    45% {
-        filter: brightness(1.28) contrast(0.72) saturate(0.55) sepia(0.08);
-    }
-    100% {
-        filter: none;
     }
 }
 @keyframes labCursor {

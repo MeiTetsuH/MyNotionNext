@@ -1,11 +1,17 @@
 import BLOG, { LAYOUT_MAPPINGS } from '@/blog.config'
-import getConfig from 'next/config'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { getQueryParam, getQueryVariable, isBrowser } from '../lib/utils'
 
-// 在next.config.js中扫描所有主题
-export const { THEMES = [] } = getConfig()?.publicRuntimeConfig || {}
+// 在 next.config.js 中扫描所有主题并通过 env.NEXT_PUBLIC_THEMES 注入（替代 Next 15.5 已弃用的 next/config）
+export const THEMES = (() => {
+  try {
+    const parsed = JSON.parse(process.env.NEXT_PUBLIC_THEMES || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+})()
 const baseLayoutCache = new Map()
 const layoutByThemeCache = new Map()
 let domFixTimer = null

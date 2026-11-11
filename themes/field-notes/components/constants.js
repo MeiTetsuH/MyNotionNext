@@ -3,47 +3,41 @@ const projects = [
   {name:'EdgeKintai', url:'https://github.com/workHMZ/EdgeKintai', tags:['Cloudflare Workers','D1','Hono'], files:['edge-today','edge-calendar']},
   {name:'Tokyo Transit Monitor', url:'https://github.com/workHMZ/tokyo-transit-monitor', tags:['Python','GitHub Actions','GitHub Pages'], files:['transit-light','transit-dark']}
 ];
-let currentProject = 0;
 const photos = [
   {
     "file": "harbor",
     "date": "2026.07.04",
     "place": "placeChiba",
     "settings": "33mm · f/5.6 · 1/850s · ISO 160",
-    "camera": "FUJIFILM X-S20",
-    "category": "landscape"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "sky",
     "date": "2026.10.03",
     "place": "placeTokyo",
     "settings": "33mm · f/4 · 1/900s · ISO 160",
-    "camera": "FUJIFILM X-S20",
-    "category": "everyday"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "snow",
     "date": "2025.12.14",
     "place": "placeSapporo",
     "settings": "33mm · f/1.8 · 1/125s · ISO 320",
-    "camera": "FUJIFILM X-S20",
-    "category": "everyday"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "mountains",
     "date": "2026.07.04",
     "place": "placeChiba",
     "settings": "33mm · f/5 · 1/1000s · ISO 320",
-    "camera": "FUJIFILM X-S20",
-    "category": "landscape"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "sumida",
     "date": "2026.08.15",
     "place": "placeSumida",
     "settings": "33mm · f/1.4 · 1/60s · ISO 640",
-    "camera": "FUJIFILM X-S20",
-    "category": "everyday"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "tree",
@@ -51,7 +45,6 @@ const photos = [
     "place": "placeTree",
     "settings": "33mm · f/1.8 · 1/80s · ISO 320",
     "camera": "FUJIFILM X-S20",
-    "category": "landscape",
     "ratio": 0.6668
   },
   {
@@ -60,7 +53,6 @@ const photos = [
     "place": "placeTree",
     "settings": "33mm · f/2 · 1/170s · ISO 320",
     "camera": "FUJIFILM X-S20",
-    "category": "landscape",
     "ratio": 0.6668
   },
   {
@@ -68,40 +60,35 @@ const photos = [
     "date": "2025.06.28",
     "place": "placeMeadow",
     "settings": "33mm · f/4.5 · 1/1100s · ISO 320",
-    "camera": "FUJIFILM X-S20",
-    "category": "landscape"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "fireworks-trails",
     "date": "2025.07.26",
     "place": "placeSummer",
     "settings": "33mm · ISO 160",
-    "camera": "FUJIFILM X-S20",
-    "category": "everyday"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "fireworks-bloom",
     "date": "2025.07.26",
     "place": "placeSummer",
     "settings": "33mm · ISO 160",
-    "camera": "FUJIFILM X-S20",
-    "category": "everyday"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "jellyfish",
     "date": "2025.10.12",
     "place": "placeAquarium",
     "settings": "33mm · f/1.4 · 1/140s · ISO 320",
-    "camera": "FUJIFILM X-S20",
-    "category": "everyday"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "jellyfish-drift",
     "date": "2025.10.12",
     "place": "placeAquarium",
     "settings": "33mm · f/1.4 · 1/140s · ISO 320",
-    "camera": "FUJIFILM X-S20",
-    "category": "everyday"
+    "camera": "FUJIFILM X-S20"
   },
   {
     "file": "north",
@@ -109,14 +96,12 @@ const photos = [
     "place": "placeNorth",
     "settings": "33mm · f/3.2 · 1/420s · ISO 320",
     "camera": "FUJIFILM X-S20",
-    "category": "landscape",
     "ratio": 0.6668
   },
   {
     "file": "sengen",
     "date": "2026.10.12",
     "place": "placeSengen",
-    "category": "everyday",
     "camera": "FUJIFILM X-S20",
     "settings": "33mm · f/2.5 · 1/10500s · ISO 640",
     "ratio": 0.6667
@@ -125,7 +110,6 @@ const photos = [
     "file": "fuji-sea",
     "date": "2026.10.12",
     "place": "placeShizuokaSea",
-    "category": "landscape",
     "camera": "FUJIFILM X-S20",
     "settings": "33mm · f/2.8 · 1/14000s · ISO 640",
     "ratio": 0.6667
@@ -136,7 +120,6 @@ const photos = [
     "place": "placeHarumi",
     "settings": "33mm · f/8 · 1.5s · ISO 160",
     "camera": "FUJIFILM X-S20",
-    "category": "everyday",
     "description": "photoDesc15"
   },
   {
@@ -145,7 +128,6 @@ const photos = [
     "place": "placeHarumi",
     "settings": "33mm · f/8 · 2s · ISO 160",
     "camera": "FUJIFILM X-S20",
-    "category": "everyday",
     "description": "photoDesc16"
   }
 ];

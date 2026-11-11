@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useCallback, useState } from 'react'
 import Link from 'next/link'
 import { useLang } from './LangContext'
 import { heroPhotos } from './constants'
-import { extractNoteLines } from '../data'
+import { extractNoteLines, resolvePostHref } from '../data'
 
 // Body lines that only repeat what the back already prints as fields
 const META_LINE = /^(地点|地點|器材|参数|參數|日期|拍摄|place|location|camera|gear|settings|exposure|date|場所|機材|カメラ|設定|日付)\s*[:：]/i
@@ -97,7 +97,7 @@ export const Lightbox = ({
         settings: photo.settings,
         description: photo.description,
         no: indexText,
-        href: photo.isNotion ? photo.href || (photo.slug ? `/${photo.slug}` : null) : null
+        href: photo.isNotion ? resolvePostHref(photo, photo.slug, '') || null : null
       }
     }
   } else if (mode === 'hero') {
@@ -129,9 +129,11 @@ export const Lightbox = ({
           : screen === 'admin'
           ? 1
           : 0
+      const fallbackFile = proj.files ? proj.files[screenIdx] : 'r2-share'
+      const fallbackExt = String(fallbackFile).startsWith('transit-') ? 'png' : 'jpg'
       imgSrc = proj.images
         ? proj.images[screenIdx] || proj.images[0]
-        : `/themes/field-notes/assets/${proj.files ? proj.files[screenIdx] : 'r2-share'}.jpg`
+        : `/themes/field-notes/assets/${fallbackFile}.${fallbackExt}`
       alt = (proj.alts && proj.alts[screenIdx]) || proj.name
       title = `${proj.name} / ${(proj.screens && proj.screens[screenIdx]) || 'SCREEN'}`
       indexText = `PROJECT ${String((projectIndex || 0) + 1).padStart(3, '0')}`
@@ -216,7 +218,7 @@ export const Lightbox = ({
           }
           pre.src = adjSrc
         }
-        const adjHref = adj.isNotion ? adj.href || (adj.slug ? `/${adj.slug}` : null) : null
+        const adjHref = adj.isNotion ? resolvePostHref(adj, adj.slug, '') || null : null
         if (adjHref) {
           loadNoteLines(adjHref, lang).catch(() => {})
         }
@@ -233,6 +235,19 @@ export const Lightbox = ({
       }
     }
   }, [open, mode, index, photoList, lang])
+
+  // Prevent iOS Safari rubber-band background scrolling on dialog::backdrop touches
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!open || !dialog) return undefined
+    const onTouchMove = e => {
+      if (e.target === dialog) {
+        e.preventDefault()
+      }
+    }
+    dialog.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => dialog.removeEventListener('touchmove', onTouchMove)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -289,6 +304,7 @@ export const Lightbox = ({
       aria-labelledby='viewer-title'
       onClose={onClose}
       onClick={e => {
+        if (e.detail === 0) return
         if (e.target === dialogRef.current) {
           const r = dialogRef.current.getBoundingClientRect()
           if (
@@ -313,6 +329,7 @@ export const Lightbox = ({
 
       <div
         className={`viewer-image-wrap ${back ? 'is-flippable' : ''} ${flipped ? 'is-flipped' : ''}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           key={imgSrc}
           ref={imgRef}

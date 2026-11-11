@@ -7,9 +7,9 @@ const isLocalFontAwesome = BLOG.FONT_AWESOME?.startsWith(
 )
 
 // 预先设置深色模式的脚本内容
-const darkModeScript = `
+const buildDarkModeScript = isFieldNotes => `
 (function() {
-  const isFieldNotes = '${BLOG.THEME || ''}' === 'field-notes'
+  const isFieldNotes = ${isFieldNotes ? 'true' : `'${BLOG.THEME || ''}' === 'field-notes'`}
   if (isFieldNotes) {
     document.documentElement.classList.remove('dark')
     document.documentElement.classList.add('light')
@@ -44,29 +44,47 @@ const darkModeScript = `
 })()
 `
 
-// 预先初始化语言脚本，避免客户端二跳闪烁
+// 预先初始化语言脚本：?lang= 最高优先级并落盘 → 已存偏好 → 浏览器语言（非中/日统一回退 en）
 const initLangScript = `
 (function() {
   try {
-    var saved = localStorage.getItem('h-mz-language') || (document.cookie.match(/(?:^|;\\s*)h-mz-language=([^;]+)/) || [])[1];
-    var lang = saved;
-    if (!lang) {
-      var params = new URLSearchParams(window.location.search);
-      var q = (params.get('lang') || params.get('locale') || '').toLowerCase();
-      if (q.indexOf('ja') === 0) lang = 'ja';
-      else if (q.indexOf('en') === 0) lang = 'en';
-      else if (q.indexOf('zh') === 0) lang = 'zh';
+    var supported = { zh: 1, en: 1, ja: 1 };
+    var params = new URLSearchParams(window.location.search);
+    var q = (params.get('lang') || params.get('locale') || '').toLowerCase();
+    var fromQuery = '';
+    if (q.indexOf('ja') === 0) fromQuery = 'ja';
+    else if (q.indexOf('en') === 0) fromQuery = 'en';
+    else if (q.indexOf('zh') === 0) fromQuery = 'zh';
+
+    var lang = '';
+    if (fromQuery) {
+      lang = fromQuery;
+      try {
+        localStorage.setItem('h-mz-language', lang);
+        document.cookie = 'h-mz-language=' + lang + ';path=/;max-age=31536000;SameSite=Lax';
+      } catch (e) {}
     }
+
     if (!lang) {
-      var nav = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
-      for (var i = 0; i < nav.length; i++) {
-        var l = String(nav[i] || '').toLowerCase();
-        if (l.indexOf('zh') === 0) { lang = 'zh'; break; }
-        if (l.indexOf('ja') === 0) { lang = 'ja'; break; }
-        if (l.indexOf('en') === 0) { lang = 'en'; break; }
+      var rawSaved = localStorage.getItem('h-mz-language') || (document.cookie.match(/(?:^|;\\s*)h-mz-language=([^;]+)/) || [])[1] || '';
+      if (supported[rawSaved]) lang = rawSaved;
+    }
+
+    if (!lang) {
+      var nav = (navigator.languages && navigator.languages.length) ? navigator.languages : (navigator.language ? [navigator.language] : []);
+      if (nav.length > 0) {
+        lang = 'en';
+        for (var i = 0; i < nav.length; i++) {
+          var l = String(nav[i] || '').toLowerCase();
+          if (!l) continue;
+          if (l.indexOf('zh') === 0) { lang = 'zh'; break; }
+          if (l.indexOf('ja') === 0) { lang = 'ja'; break; }
+          if (l.indexOf('en') === 0) { lang = 'en'; break; }
+        }
       }
     }
-    if (!lang) lang = 'zh';
+
+    if (!supported[lang]) lang = 'zh';
     window.__INIT_LANG__ = lang;
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : (lang === 'ja' ? 'ja' : 'en');
   } catch(e) {}
@@ -80,6 +98,11 @@ class MyDocument extends Document {
   }
 
   render() {
+    const runtimeTheme =
+      this.props.__NEXT_DATA__?.props?.pageProps?.NOTION_CONFIG?.THEME ||
+      BLOG.THEME ||
+      ''
+    const isFieldNotes = runtimeTheme === 'field-notes'
     return (
       <Html lang={BLOG.LANG}>
         <Head>
@@ -139,7 +162,7 @@ class MyDocument extends Document {
           )}
 
           {/* 预先设置深色模式与语言，避免闪烁 */}
-          <script dangerouslySetInnerHTML={{ __html: darkModeScript }} />
+          <script dangerouslySetInnerHTML={{ __html: buildDarkModeScript(isFieldNotes) }} />
           <script dangerouslySetInnerHTML={{ __html: initLangScript }} />
         </Head>
 

@@ -163,8 +163,11 @@ nav {
 
 .fireworks {
   position: fixed;
-  left: 0;
-  top: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
   z-index: 1000;
   pointer-events: none;
 }

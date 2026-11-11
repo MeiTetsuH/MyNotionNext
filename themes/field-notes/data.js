@@ -3,13 +3,24 @@ import { translations, edgeCopy, transitCopy } from './components/translations'
 import { projects, photos as rawPhotos, heroPhotos, photoOrder } from './components/constants'
 
 export {
-  translations,
   edgeCopy,
   transitCopy,
   projects,
-  heroPhotos,
-  rawPhotos,
-  photoOrder
+  heroPhotos
+}
+
+/**
+ * Normalize an internal post/page href so missing `post.href` or leading-slash
+ * `post.slug` values never produce protocol-relative `//slug` links.
+ */
+export function resolvePostHref(post, fallbackSlug = '', defaultHref = '#') {
+  const rawHref = typeof post === 'string' ? post : post?.href
+  const candidate = String(
+    rawHref || fallbackSlug || post?.slug || post?.id || ''
+  ).trim()
+  if (!candidate) return defaultHref
+  if (/^(?:https?:|mailto:|tel:|#)/i.test(candidate)) return candidate
+  return '/' + candidate.replace(/^\/+/, '')
 }
 
 /**
@@ -983,7 +994,7 @@ export function parseNotionWorkProject(page, lang = 'zh', t = k => k) {
           .filter(Boolean)
       : []
 
-  const fallbackHref = page?.href || (page?.slug ? `/${page.slug}` : '#work')
+  const fallbackHref = resolvePostHref(page, page?.slug, '#work')
   const url =
     linkUrlFromBlocks ||
     (atParts && atParts[3] ? atParts[3] : '') ||

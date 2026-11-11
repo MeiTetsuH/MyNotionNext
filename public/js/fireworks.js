@@ -1,205 +1,195 @@
 /**
- * 创建烟花
- * @param config
+ * Lightweight native Canvas click-fireworks effect (zero external runtime dependencies).
+ * - Never sets pixel inline width/height (prevents mobile orientation/resize layout blowout)
+ * - Runs requestAnimationFrame only while particles are active (0% idle CPU/battery drain)
+ * - Returns a destroy() handle so React unmount / StrictMode leaves no leaked listeners
  */
-function createFireworks({ config, anime }) {
-  // 创建这个Canvas元素 <canvas id='fireworks' className='fireworks'></canvas> 给我代码
-  const canvasElement = document.createElement('canvas')
-  canvasElement.id = 'fireworks'
-  canvasElement.className = 'fireworks'
-  document.body.appendChild(canvasElement)
-
-  const defaultConfig = {
-    colors: config?.colors,
-    numberOfParticules: 20,
-    orbitRadius: {
-      min: 50,
-      max: 100
-    },
-    circleRadius: {
-      min: 10,
-      max: 20
-    },
-    diffuseRadius: {
-      min: 50,
-      max: 100
-    },
-    animeDuration: {
-      min: 900,
-      max: 1500
-    }
+function createFireworks({ config } = {}) {
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    return () => {}
   }
-  config = Object.assign(defaultConfig, config)
 
-  let pointerX = 0
-  let pointerY = 0
+  const existing = document.querySelectorAll('canvas.fireworks')
+  existing.forEach(node => node.parentNode && node.parentNode.removeChild(node))
 
-  // sky blue
-  const colors = config.colors
+  const canvasEl = document.createElement('canvas')
+  canvasEl.id = 'fireworks'
+  canvasEl.className = 'fireworks'
+  canvasEl.setAttribute('aria-hidden', 'true')
+  document.body.appendChild(canvasEl)
 
-  const canvasEl = document.querySelector('.fireworks')
+  const defaultColors = [
+    '255, 20, 97',
+    '24, 255, 146',
+    '90, 135, 255',
+    '251, 243, 140'
+  ]
+  const settings = Object.assign(
+    {
+      colors: defaultColors,
+      numberOfParticules: 20,
+      orbitRadius: { min: 50, max: 100 },
+      circleRadius: { min: 10, max: 20 },
+      diffuseRadius: { min: 50, max: 100 },
+      animeDuration: { min: 900, max: 1500 }
+    },
+    config || {}
+  )
+  const palette =
+    Array.isArray(settings.colors) && settings.colors.length > 0
+      ? settings.colors
+      : defaultColors
+
   const ctx = canvasEl.getContext('2d')
-
-  /**
-   * 设置画布尺寸
-   */
-  function setCanvasSize(canvasEl) {
-    canvasEl.width = window.innerWidth
-    canvasEl.height = window.innerHeight
-    canvasEl.style.width = `${window.innerWidth}px`
-    canvasEl.style.height = `${window.innerHeight}px`
-  }
-
-  /**
-   * update pointer
-   * @param {TouchEvent} e
-   */
-  function updateCoords(e) {
-    pointerX =
-      e.clientX ||
-      (e?.touches[0] ? e.touches[0].clientX : e.changedTouches[0].clientX)
-    pointerY =
-      e.clientY ||
-      (e?.touches[0] ? e.touches[0].clientY : e.changedTouches[0].clientY)
-  }
-
-  function setParticuleDirection(p) {
-    const angle = (anime.random(0, 360) * Math.PI) / 180
-    const value = anime.random(
-      config.diffuseRadius.min,
-      config.diffuseRadius.max
-    )
-    const radius = [-1, 1][anime.random(0, 1)] * value
-    return {
-      x: p.x + radius * Math.cos(angle),
-      y: p.y + radius * Math.sin(angle)
+  if (!ctx) {
+    return () => {
+      if (canvasEl.parentNode) canvasEl.parentNode.removeChild(canvasEl)
     }
   }
 
-  /**
-   * 在指定位置创建粒子
-   * @param {number} x
-   * @param {number} y
-   * @returns
-   */
-  function createParticule(x, y) {
-    const p = {
-      x,
-      y,
-      color: `rgba(${colors[anime.random(0, colors.length - 1)]},${anime.random(
-        0.2,
-        0.8
-      )})`,
-      radius: anime.random(config.circleRadius.min, config.circleRadius.max),
-      endPos: null,
-      draw() {}
-    }
-    p.endPos = setParticuleDirection(p)
-    p.draw = function () {
-      ctx.beginPath()
-      ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, true)
-      ctx.fillStyle = p.color
-      ctx.fill()
-    }
-    return p
+  let viewW = 0
+  let viewH = 0
+  function setCanvasSize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    viewW = document.documentElement.clientWidth || window.innerWidth
+    viewH = document.documentElement.clientHeight || window.innerHeight
+    canvasEl.width = Math.max(1, Math.round(viewW * dpr))
+    canvasEl.height = Math.max(1, Math.round(viewH * dpr))
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   }
 
-  function createCircle(x, y) {
-    const p = {
-      x,
-      y,
-      color: '#000',
-      radius: 0.1,
-      alpha: 0.5,
-      lineWidth: 6,
-      draw() {}
-    }
-    p.draw = function () {
-      ctx.globalAlpha = p.alpha
-      ctx.beginPath()
-      ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, true)
-      ctx.lineWidth = p.lineWidth
-      ctx.strokeStyle = p.color
-      ctx.stroke()
-      ctx.globalAlpha = 1
-    }
-    return p
-  }
+  const rand = (min, max) => min + Math.random() * (max - min)
+  const randInt = (min, max) => Math.floor(rand(min, max + 1))
+  const easeOutExpo = t => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t))
 
-  function renderParticule(anim) {
-    for (let i = 0; i < anim.animatables.length; i++) {
-      anim.animatables[i].target.draw()
-    }
-  }
+  const bursts = []
+  let rafId = 0
 
-  function animateParticules(x, y) {
-    const circle = createCircle(x, y)
-    const particules = []
-    for (let i = 0; i < config.numberOfParticules; i++) {
-      particules.push(createParticule(x, y))
-    }
-
-    anime
-      .timeline()
-      .add({
-        targets: particules,
-        x(p) {
-          return p.endPos.x
-        },
-        y(p) {
-          return p.endPos.y
-        },
-        radius: 0.1,
-        duration: anime.random(
-          config.animeDuration.min,
-          config.animeDuration.max
-        ),
-        easing: 'easeOutExpo',
-        update: renderParticule
+  function spawnBurst(x, y) {
+    const now = performance.now()
+    const particles = []
+    for (let i = 0; i < settings.numberOfParticules; i++) {
+      const angle = rand(0, Math.PI * 2)
+      const dist =
+        (Math.random() < 0.5 ? -1 : 1) *
+        rand(settings.diffuseRadius.min, settings.diffuseRadius.max)
+      particles.push({
+        startX: x,
+        startY: y,
+        endX: x + dist * Math.cos(angle),
+        endY: y + dist * Math.sin(angle),
+        startRadius: rand(settings.circleRadius.min, settings.circleRadius.max),
+        color: `rgba(${palette[randInt(0, palette.length - 1)]},${rand(0.2, 0.85).toFixed(2)})`,
+        duration: rand(settings.animeDuration.min, settings.animeDuration.max)
       })
-      .add(
-        {
-          targets: circle,
-          radius: anime.random(config.orbitRadius.min, config.orbitRadius.max),
-          lineWidth: 0,
-          alpha: {
-            value: 0,
-            easing: 'linear',
-            duration: anime.random(600, 800)
-          },
-          duration: anime.random(1200, 1800),
-          easing: 'easeOutExpo',
-          update: renderParticule
-        },
-        0
-      )
+    }
+
+    const ring = {
+      x,
+      y,
+      endRadius: rand(settings.orbitRadius.min, settings.orbitRadius.max),
+      duration: rand(1200, 1800),
+      alphaDuration: rand(600, 800)
+    }
+
+    const maxDuration = Math.max(
+      ring.duration,
+      ...particles.map(p => p.duration)
+    )
+    bursts.push({ start: now, maxDuration, particles, ring })
+
+    if (!rafId) {
+      rafId = window.requestAnimationFrame(tick)
+    }
   }
 
-  const render = anime({
-    duration: Infinity,
-    update: () => {
-      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height)
+  function tick(now) {
+    ctx.clearRect(0, 0, viewW, viewH)
+
+    for (let b = bursts.length - 1; b >= 0; b--) {
+      const burst = bursts[b]
+      const elapsed = now - burst.start
+      if (elapsed >= burst.maxDuration) {
+        bursts.splice(b, 1)
+        continue
+      }
+
+      for (let i = 0; i < burst.particles.length; i++) {
+        const p = burst.particles[i]
+        if (elapsed >= p.duration) continue
+        const progress = easeOutExpo(elapsed / p.duration)
+        const px = p.startX + (p.endX - p.startX) * progress
+        const py = p.startY + (p.endY - p.startY) * progress
+        const pr = p.startRadius + (0.1 - p.startRadius) * progress
+        if (pr <= 0.1) continue
+        ctx.beginPath()
+        ctx.arc(px, py, pr, 0, Math.PI * 2, true)
+        ctx.fillStyle = p.color
+        ctx.fill()
+      }
+
+      const ring = burst.ring
+      if (elapsed < ring.duration && elapsed < ring.alphaDuration) {
+        const rProgress = easeOutExpo(elapsed / ring.duration)
+        const alpha = 0.5 * (1 - elapsed / ring.alphaDuration)
+        const lineWidth = 6 * (1 - rProgress)
+        if (alpha > 0.01 && lineWidth > 0.05) {
+          ctx.save()
+          ctx.globalAlpha = alpha
+          ctx.beginPath()
+          ctx.arc(
+            ring.x,
+            ring.y,
+            0.1 + (ring.endRadius - 0.1) * rProgress,
+            0,
+            Math.PI * 2,
+            true
+          )
+          ctx.lineWidth = lineWidth
+          ctx.strokeStyle = '#000'
+          ctx.stroke()
+          ctx.restore()
+        }
+      }
     }
-  })
 
-  document.addEventListener(
-    'mousedown',
-    e => {
-      render.play()
-      updateCoords(e)
-      animateParticules(pointerX, pointerY)
-    },
-    false
-  )
+    if (bursts.length > 0) {
+      rafId = window.requestAnimationFrame(tick)
+    } else {
+      rafId = 0
+      ctx.clearRect(0, 0, viewW, viewH)
+    }
+  }
 
-  setCanvasSize(canvasEl)
-  window.addEventListener(
-    'resize',
-    () => {
-      setCanvasSize(canvasEl)
-    },
-    false
-  )
+  function onPointerDown(e) {
+    const touch = e.touches?.[0] || e.changedTouches?.[0]
+    const x = typeof e.clientX === 'number' ? e.clientX : touch?.clientX
+    const y = typeof e.clientY === 'number' ? e.clientY : touch?.clientY
+    if (typeof x === 'number' && typeof y === 'number') {
+      spawnBurst(x, y)
+    }
+  }
+
+  setCanvasSize()
+  document.addEventListener('mousedown', onPointerDown, { passive: true })
+  window.addEventListener('resize', setCanvasSize, { passive: true })
+
+  return function destroyFireworks() {
+    if (rafId) {
+      window.cancelAnimationFrame(rafId)
+      rafId = 0
+    }
+    bursts.length = 0
+    document.removeEventListener('mousedown', onPointerDown)
+    window.removeEventListener('resize', setCanvasSize)
+    if (canvasEl.parentNode) {
+      canvasEl.parentNode.removeChild(canvasEl)
+    }
+  }
 }
 
 window.createFireworks = createFireworks

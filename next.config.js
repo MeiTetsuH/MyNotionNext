@@ -173,8 +173,8 @@ function scanSubdirectories(directory) {
 
   fs.readdirSync(directory).forEach(file => {
     const fullPath = path.join(directory, file)
-    const stats = fs.statSync(fullPath)
-    if (stats.isDirectory()) {
+    const lstat = fs.lstatSync(fullPath)
+    if (!lstat.isSymbolicLink() && lstat.isDirectory()) {
       subdirectories.push(file)
     }
 
@@ -205,9 +205,6 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   generateEtags: true,
-
-  // 构建优化
-  swcMinify: true,
   modularizeImports: {
     '@heroicons/react/24/outline': {
       transform: '@heroicons/react/24/outline/{{member}}'
@@ -337,10 +334,18 @@ const nextConfig = {
           ]
         },
         {
+          source: '/themes/field-notes/assets/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=86400, stale-while-revalidate=604800'
+            }
+          ]
+        },
+        {
           source: '/:path*{/}?',
           headers: [
-            // 为了博客兼容性，不做过多安全限制
-            { key: 'Access-Control-Allow-Credentials', value: 'true' },
+            // 为了博客兼容性，不做过多安全限制（避免 Credentials:true 与 Origin:* 违反 Fetch 规范）
             { key: 'Access-Control-Allow-Origin', value: '*' },
             {
               key: 'Access-Control-Allow-Methods',
@@ -350,7 +355,9 @@ const nextConfig = {
               key: 'Access-Control-Allow-Headers',
               value:
                 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-            }
+            },
+            { key: 'X-Content-Type-Options', value: 'nosniff' },
+            { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
             // 安全头部 相关配置，谨慎开启
             //   { key: 'X-Frame-Options', value: 'DENY' },
             //   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -458,9 +465,8 @@ const nextConfig = {
     delete pages['/auth']
     return pages
   },
-  publicRuntimeConfig: {
-    // 这里的配置既可以服务端获取到，也可以在浏览器端获取到
-    THEMES: themes
+  env: {
+    NEXT_PUBLIC_THEMES: JSON.stringify(themes)
   }
 }
 
