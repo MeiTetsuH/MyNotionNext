@@ -136,7 +136,9 @@ const SEO = props => {
     siteConfig('THEME', null, NOTION_CONFIG) === 'field-notes'
   const resolvedThemeColor = pwaEnabled
     ? pwaConfig.themeColor
-    : BACKGROUND_DARK || (isFieldNotes ? '#f0eee9' : '')
+    : isFieldNotes
+      ? '#f0eee9'
+      : BACKGROUND_DARK || ''
   const noindex = Boolean(post?.password) ||
     shouldNoIndexPath(router.asPath || router.route) ||
     shouldNoIndexPath(post?.slug || '') ||
